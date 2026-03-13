@@ -250,17 +250,27 @@ class AIConfigManager:
                     print("Kimi配置已存在，跳过初始化")
                     return
                 
-                # 添加Kimi配置
-                agents = config.get('agents', {})
+                # 从defaults.models读取配置
+                defaults = config.get('defaults', {})
+                models = defaults.get('models', {})
                 
-                for agent_name, agent_config in agents.items():
-                    if 'kimi' in agent_name.lower():
+                for model_key, model_config in models.items():
+                    if 'moonshot' in model_key.lower() or 'kimi' in model_key.lower():
+                        # 解析模型名称
+                        model_name = model_key.split('/')[-1] if '/' in model_key else model_key
+                        
+                        # 从环境变量读取API密钥
+                        api_key = os.environ.get('MOONSHOT_API_KEY', '')
+                        if not api_key:
+                            # 尝试读取feishu或其他位置的凭证
+                            api_key = self._get_api_key_from_credentials('moonshot')
+                        
                         ai_config = AIConfig(
-                            name="Kimi K2.5",
+                            name=model_config.get('alias', 'Kimi K2.5'),
                             provider="moonshot",
-                            model=agent_config.get('model', 'kimi-k2.5'),
-                            api_key=agent_config.get('api_key', ''),
-                            base_url=agent_config.get('base_url', 'https://api.moonshot.cn/v1'),
+                            model=model_name,
+                            api_key=api_key,
+                            base_url="https://api.moonshot.cn/v1",
                             temperature=0.7,
                             max_tokens=2000,
                             weight=1.0,
@@ -271,11 +281,12 @@ class AIConfigManager:
                         
                         self.add_ai_config(ai_config)
                         print(f"已添加默认配置: {ai_config.name}")
+                        return
                         
             except Exception as e:
                 print(f"读取OpenClaw配置失败: {e}")
         
-        # 如果没有找到配置，添加一个空模板
+        # 如果没有找到配置，创建一个模板配置（需要用户填写API密钥）
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM ai_configs")
@@ -283,7 +294,33 @@ class AIConfigManager:
         conn.close()
         
         if count == 0:
-            print("请手动添加AI配置")
+            # 创建Kimi模板
+            ai_config = AIConfig(
+                name="Kimi K2.5 (请配置API密钥)",
+                provider="moonshot",
+                model="kimi-k2.5",
+                api_key="",
+                base_url="https://api.moonshot.cn/v1",
+                temperature=0.7,
+                max_tokens=2000,
+                weight=1.0,
+                status='inactive',  # 默认停用，需要配置API密钥后启用
+                priority=1,
+                description="Moonshot Kimi K2.5大模型，用于新闻情绪分析"
+            )
+            self.add_ai_config(ai_config)
+            print("已创建Kimi模板配置（需要配置API密钥后启用）")
+    
+    def _get_api_key_from_credentials(self, provider: str) -> str:
+        """从凭证目录读取API密钥"""
+        try:
+            creds_path = os.path.expanduser(f"~/.openclaw/credentials/{provider}")
+            if os.path.exists(creds_path):
+                with open(creds_path, 'r') as f:
+                    return f.read().strip()
+        except:
+            pass
+        return ""
 
 
 def main():

@@ -1,336 +1,265 @@
 #!/usr/bin/env python3
 """
 新闻汇总模块
-- 整合多个新闻源
-- 智能去重
-- 分类标签（国际大事/政治/金融/AI/加密货币）
-- 生成摘要
+提供新闻去重、聚类和汇总功能
 """
 
+import os
+import sys
 import sqlite3
-import json
-import re
-from datetime import datetime, timedelta
-from pathlib import Path
+import hashlib
 from typing import List, Dict, Set, Tuple
 from collections import defaultdict
+from datetime import datetime, timedelta
 
-DATA_DIR = Path.home() / ".openclaw/workspace/quant-trading/data"
-DB_PATH = DATA_DIR / "market_data.db"
+# 添加路径
+sys.path.insert(0, os.path.expanduser("~/.openclaw/workspace/quant-trading/data-layer"))
 
 
 class NewsSummarizer:
     """新闻汇总器"""
     
-    # 新闻分类关键词
-    CATEGORY_KEYWORDS = {
-        '国际大事': ['战争', '冲突', '和平', '联合国', 'G20', 'G7', '峰会', '外交', '制裁', '协议',
-                  'war', 'conflict', 'peace', 'united nations', 'summit', 'diplomatic', 'sanctions'],
-        '政治': ['选举', '投票', '总统', '总理', '政府', '政策', '法案', '议会', '国会', '立法',
-               'election', 'vote', 'president', 'prime minister', 'government', 'policy', 'bill', 'congress'],
-        '金融': ['央行', '美联储', '加息', '降息', '利率', '通胀', 'CPI', 'PPI', 'GDP', '就业',
-               '银行', '信贷', '货币', '财政', '央行', 'Fed', 'interest rate', 'inflation', 'monetary'],
-        'AI': ['人工智能', 'AI', '大模型', 'ChatGPT', '机器学习', '深度学习', '算法', '算力',
-             'artificial intelligence', 'machine learning', 'deep learning', 'LLM', 'neural network', 'AI model'],
-        '加密货币': ['比特币', '以太坊', '加密货币', '区块链', 'DeFi', 'NFT', '挖矿', '交易所',
-                  'Bitcoin', 'Ethereum', 'crypto', 'blockchain', 'defi', 'nft', 'mining', 'digital asset']
-    }
+    def __init__(self, db_path: str = None):
+        self.db_path = db_path or os.path.expanduser("~/.openclaw/workspace/quant-trading/data-layer/market_data.db")
+        self.similarity_threshold = 0.7  # 相似度阈值
     
-    def __init__(self):
-        self.db_path = DB_PATH
+    def _get_connection(self):
+        """获取数据库连接"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
     
-    def categorize_news(self, title: str, content: str) -> List[str]:
-        """
-        对新闻进行分类
+    def _compute_similarity(self, text1: str, text2: str) -> float:
+        """计算两段文本的相似度（使用简单的Jaccard相似度）"""
+        # 分词（简单按字符）
+        set1 = set(text1.lower())
+        set2 = set(text2.lower())
         
-        Returns:
-            分类列表（一条新闻可能属于多个分类）
-        """
-        text = f"{title} {content}".lower()
-        categories = []
-        
-        for category, keywords in self.CATEGORY_KEYWORDS.items():
-            for keyword in keywords:
-                if keyword.lower() in text:
-                    categories.append(category)
-                    break
-        
-        return categories if categories else ['其他']
-    
-    def deduplicate_news(self, news_list: List[Dict], similarity_threshold: float = 0.7) -> List[Dict]:
-        """
-        智能去重
-        
-        策略:
-        1. 完全相同的标题去重
-        2. 相似度高的内容去重（基于关键词重叠）
-        3. 保留最新的
-        """
-        unique_news = []
-        seen_hashes = set()
-        
-        # 按时间排序，最新的在前
-        sorted_news = sorted(news_list, key=lambda x: x.get('published_at', ''), reverse=True)
-        
-        for news in sorted_news:
-            title = news.get('title', '') or ''
-            content = news.get('content', '') or ''
-            
-            # 生成标题哈希
-            title_hash = self._generate_hash(title)
-            
-            # 检查完全重复
-            if title_hash in seen_hashes:
-                continue
-            
-            # 检查相似内容
-            is_duplicate = False
-            for existing in unique_news:
-                if self._calculate_similarity(news, existing) > similarity_threshold:
-                    is_duplicate = True
-                    break
-            
-            if not is_duplicate:
-                seen_hashes.add(title_hash)
-                unique_news.append(news)
-        
-        return unique_news
-    
-    def _generate_hash(self, text: str) -> str:
-        """生成文本哈希"""
-        import hashlib
-        # 清洗文本后生成哈希
-        clean_text = re.sub(r'[^\w]', '', text.lower())
-        return hashlib.md5(clean_text.encode()).hexdigest()[:16]
-    
-    def _calculate_similarity(self, news1: Dict, news2: Dict) -> float:
-        """计算两条新闻的相似度"""
-        text1 = f"{news1.get('title', '')} {news1.get('content', '')}"
-        text2 = f"{news2.get('title', '')} {news2.get('content', '')}"
-        
-        # 提取关键词
-        words1 = set(re.findall(r'\b\w+\b', text1.lower()))
-        words2 = set(re.findall(r'\b\w+\b', text2.lower()))
-        
-        if not words1 or not words2:
+        if not set1 or not set2:
             return 0.0
         
-        # Jaccard相似度
-        intersection = words1 & words2
-        union = words1 | words2
+        intersection = len(set1 & set2)
+        union = len(set1 | set2)
         
-        return len(intersection) / len(union)
+        return intersection / union if union > 0 else 0.0
     
-    def generate_summary(self, news_list: List[Dict], category: str = None) -> Dict:
-        """
-        生成新闻摘要
+    def _get_content_hash(self, content: str) -> str:
+        """计算内容哈希"""
+        return hashlib.md5(content.lower().strip().encode()).hexdigest()[:16]
+    
+    def deduplicate_news(self, news_list: List[Dict]) -> Tuple[List[Dict], List[Tuple[int, int]]]:
+        """去重新闻列表"""
+        unique_news = []
+        duplicates = []
+        seen_hashes = {}
         
-        Args:
-            news_list: 新闻列表
-            category: 指定分类（可选）
+        for item in news_list:
+            content = item.get('content') or item.get('title', '')
+            content_hash = self._get_content_hash(content)
+            
+            if content_hash in seen_hashes:
+                # 标记为重复
+                duplicates.append((item['id'], seen_hashes[content_hash]))
+            else:
+                seen_hashes[content_hash] = item['id']
+                unique_news.append(item)
         
-        Returns:
-            摘要数据
-        """
-        if category:
-            filtered_news = [n for n in news_list if category in n.get('categories', [])]
-        else:
-            filtered_news = news_list
+        return unique_news, duplicates
+    
+    def cluster_by_topic(self, news_list: List[Dict]) -> Dict[str, List[Dict]]:
+        """按主题聚类新闻"""
+        clusters = defaultdict(list)
         
-        if not filtered_news:
-            return {'count': 0, 'summary': '无相关新闻'}
+        for item in news_list:
+            # 使用分类作为主要聚类依据
+            category = item.get('category', '未分类')
+            clusters[category].append(item)
         
-        # 统计
-        total = len(filtered_news)
-        bullish = sum(1 for n in filtered_news if n.get('ai_label') == 'bullish')
-        bearish = sum(1 for n in filtered_news if n.get('ai_label') == 'bearish')
-        neutral = total - bullish - bearish
+        return dict(clusters)
+    
+    def get_sentiment_summary(self, news_list: List[Dict]) -> Dict:
+        """计算情绪汇总"""
+        if not news_list:
+            return {'bullish': 0, 'bearish': 0, 'neutral': 0, 'total': 0}
         
-        # 提取重要新闻（置信度高的）
-        important = sorted(
-            [n for n in filtered_news if n.get('ai_confidence', 0) > 0.7],
-            key=lambda x: x.get('ai_confidence', 0),
-            reverse=True
-        )[:5]
+        # 情绪映射
+        sentiment_counts = {'bullish': 0, 'bearish': 0, 'neutral': 0}
         
-        # 生成摘要文本
-        summary_text = self._generate_summary_text(filtered_news, category)
+        for item in news_list:
+            sentiment = item.get('sentiment', 0)
+            sentiment_label = item.get('sentiment_label', '')
+            
+            # 处理不同的sentiment格式
+            if sentiment > 0.2 or sentiment_label in ['利好', 'bullish']:
+                sentiment_counts['bullish'] += 1
+            elif sentiment < -0.2 or sentiment_label in ['利空', 'bearish']:
+                sentiment_counts['bearish'] += 1
+            else:
+                sentiment_counts['neutral'] += 1
         
         return {
-            'category': category or '全部',
-            'count': total,
-            'sentiment': {
-                'bullish': bullish,
-                'bearish': bearish,
-                'neutral': neutral,
-                'ratio': bullish / total if total > 0 else 0
-            },
-            'important_news': [
-                {
-                    'id': n['id'],
-                    'title': n.get('title', '')[:100],
-                    'label': n.get('ai_label'),
-                    'confidence': n.get('ai_confidence')
-                }
-                for n in important
-            ],
-            'summary_text': summary_text,
-            'latest_update': max(n.get('published_at', '') for n in filtered_news) if filtered_news else None
+            'bullish': sentiment_counts['bullish'],
+            'bearish': sentiment_counts['bearish'],
+            'neutral': sentiment_counts['neutral'],
+            'total': len(news_list)
         }
     
-    def _generate_summary_text(self, news_list: List[Dict], category: str) -> str:
-        """生成摘要文本"""
-        if not news_list:
-            return "暂无相关新闻"
-        
-        # 获取最新的几条新闻标题
-        recent_titles = [n.get('title', '') for n in news_list[:3] if n.get('title')]
-        
-        if category:
-            text = f"【{category}】最近{len(news_list)}条新闻："
-        else:
-            text = f"共{len(news_list)}条新闻："
-        
-        if recent_titles:
-            text += " | ".join(recent_titles[:3])
-        
-        return text
-    
-    def process_and_summarize(self, hours: int = 24) -> Dict:
-        """
-        处理和汇总新闻
-        
-        完整流程:
-        1. 获取原始新闻
-        2. 智能去重
-        3. 分类标记
-        4. 生成各分类摘要
-        """
-        conn = sqlite3.connect(self.db_path)
+    def get_news_summary_by_category(self, hours: int = 24) -> Dict:
+        """按类别获取新闻汇总"""
+        conn = self._get_connection()
         cursor = conn.cursor()
         
-        # 获取最近新闻
         since = (datetime.now() - timedelta(hours=hours)).isoformat()
-        cursor.execute('''
-            SELECT n.id, n.source, n.title, n.content, n.sentiment_score, n.sentiment_label,
-                   n.keywords, n.published_at, n.created_at,
-                   nd.final_label, nd.final_score, nd.confidence
-            FROM news n
-            LEFT JOIN news_decisions nd ON n.id = nd.news_id
-            WHERE n.published_at > ?
-            ORDER BY n.published_at DESC
-        ''', (since,))
+        
+        cursor.execute("""
+            SELECT * FROM news 
+            WHERE created_at >= ?
+            ORDER BY created_at DESC
+        """, (since,))
         
         rows = cursor.fetchall()
         conn.close()
         
-        if not rows:
-            return {
-                'period_hours': hours,
-                'total_raw': 0,
-                'total_unique': 0,
-                'categories': {},
-                'summaries': {}
-            }
-        
         # 转换为字典列表
-        news_list = []
-        for row in rows:
-            news_list.append({
-                'id': row[0],
-                'source': row[1],
-                'title': row[2],
-                'content': row[3],
-                'sentiment_score': row[4],
-                'sentiment_label': row[5],
-                'keywords': json.loads(row[6]) if row[6] else [],
-                'published_at': row[7],
-                'created_at': row[8],
-                'ai_label': row[9],
-                'ai_score': row[10],
-                'ai_confidence': row[11]
-            })
-        
-        total_raw = len(news_list)
+        news_list = [dict(row) for row in rows]
         
         # 去重
-        unique_news = self.deduplicate_news(news_list)
+        unique_news, duplicates = self.deduplicate_news(news_list)
         
-        # 分类
-        for news in unique_news:
-            news['categories'] = self.categorize_news(
-                news.get('title', ''),
-                news.get('content', '')
-            )
+        # 按类别聚类
+        clusters = self.cluster_by_topic(unique_news)
         
-        # 按分类统计
-        category_counts = defaultdict(int)
-        for news in unique_news:
-            for cat in news['categories']:
-                category_counts[cat] += 1
+        # 生成汇总
+        summary = {}
+        for category, items in clusters.items():
+            sentiment = self.get_sentiment_summary(items)
+            summary[category] = {
+                'count': len(items),
+                'sentiment': sentiment,
+                'latest': items[0] if items else None
+            }
         
-        # 生成各分类摘要
-        summaries = {}
-        for category in list(self.CATEGORY_KEYWORDS.keys()) + ['其他']:
-            summaries[category] = self.generate_summary(unique_news, category)
-        
-        # 总体摘要
-        summaries['全部'] = self.generate_summary(unique_news)
+        # 全部汇总
+        all_sentiment = self.get_sentiment_summary(unique_news)
         
         return {
-            'period_hours': hours,
-            'total_raw': total_raw,
+            'total_raw': len(news_list),
             'total_unique': len(unique_news),
-            'deduplication_rate': (total_raw - len(unique_news)) / total_raw if total_raw > 0 else 0,
-            'categories': dict(category_counts),
-            'summaries': summaries,
-            'latest_news': unique_news[:10]  # 最新的10条
+            'duplicates': len(duplicates),
+            'deduplication_rate': len(duplicates) / len(news_list) if news_list else 0,
+            'summaries': summary,
+            'all': {
+                'count': len(unique_news),
+                'sentiment': all_sentiment
+            }
         }
+    
+    def process_and_summarize(self, hours: int = 24) -> Dict:
+        """处理并汇总新闻"""
+        summary = self.get_news_summary_by_category(hours)
+        
+        # 生成人类可读的文字汇总
+        text_summary = self._generate_text_summary(summary)
+        summary['text_summary'] = text_summary
+        
+        return summary
+    
+    def _generate_text_summary(self, summary: Dict) -> str:
+        """生成文字汇总"""
+        parts = []
+        
+        # 总体统计
+        total = summary['total_unique']
+        parts.append(f"过去24小时共 {total} 条新闻（去重后）")
+        
+        # 按类别
+        if 'summaries' in summary:
+            for category, data in sorted(summary['summaries'].items(), 
+                                        key=lambda x: x[1]['count'], reverse=True):
+                if data['count'] > 0:
+                    sentiment = data['sentiment']
+                    emoji = {'利好': '🟢', '利空': '🔴', '中性': '⚪'}
+                    sentiment_str = f"利好:{sentiment['bullish']} 利空:{sentiment['bearish']} 中性:{sentiment['neutral']}"
+                    parts.append(f"  • {category}: {data['count']}条 ({sentiment_str})")
+        
+        return '\n'.join(parts)
+    
+    def get_key_events(self, hours: int = 24, min_mentions: int = 3) -> List[Dict]:
+        """获取关键事件（被多次提及的新闻）"""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        since = (datetime.now() - timedelta(hours=hours)).isoformat()
+        
+        # 获取所有新闻
+        cursor.execute("""
+            SELECT * FROM news 
+            WHERE created_at >= ?
+            ORDER BY created_at DESC
+        """, (since,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # 转换为字典列表
+        news_list = [dict(row) for row in rows]
+        
+        # 使用简单方法：按关键词分组
+        events = []
+        
+        # 预定义的关键事件类型
+        event_keywords = {
+            'ETF': ['etf', '现货', '批准', 'sec'],
+            '美联储': ['fed', '美联储', '加息', '降息', '利率'],
+            '监管': ['监管', 'sec', 'cz', '币安', '合规'],
+            '技术': ['升级', 'fork', 'layer2', '二层', '闪电网络'],
+            '黑客': ['黑客', '攻击', '盗币', '漏洞', '安全']
+        }
+        
+        for event_type, keywords in event_keywords.items():
+            matching_news = []
+            for news in news_list:
+                content = (news.get('title', '') + ' ' + (news.get('content', ''))).lower()
+                if any(kw.lower() in content for kw in keywords):
+                    matching_news.append(news)
+            
+            if len(matching_news) >= min_mentions:
+                sentiment = self.get_sentiment_summary(matching_news)
+                events.append({
+                    'type': event_type,
+                    'mentions': len(matching_news),
+                    'sentiment': sentiment,
+                    'news': matching_news[:3]  # 最多3条代表性新闻
+                })
+        
+        # 按提及次数排序
+        events.sort(key=lambda x: x['mentions'], reverse=True)
+        
+        return events
 
 
 def main():
-    """命令行入口"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='新闻汇总器')
-    parser.add_argument('--summarize', action='store_true', help='生成新闻汇总')
-    parser.add_argument('--hours', type=int, default=24, help='时间范围（小时）')
-    parser.add_argument('--category', help='指定分类')
-    parser.add_argument('--json', action='store_true', help='输出JSON格式')
-    
-    args = parser.parse_args()
-    
+    """测试新闻汇总器"""
     summarizer = NewsSummarizer()
     
-    if args.summarize:
-        result = summarizer.process_and_summarize(args.hours)
-        
-        if args.json:
-            print(json.dumps(result, indent=2, ensure_ascii=False))
-        else:
-            print(f"\n📰 新闻汇总报告（最近{result['period_hours']}小时）")
-            print("=" * 60)
-            print(f"原始新闻: {result['total_raw']} 条")
-            print(f"去重后: {result['total_unique']} 条")
-            print(f"去重率: {result['deduplication_rate']*100:.1f}%")
-            print()
-            
-            print("📊 分类统计:")
-            for cat, count in result['categories'].items():
-                print(f"  {cat}: {count} 条")
-            print()
-            
-            print("📋 各分类摘要:")
-            for cat, summary in result['summaries'].items():
-                if summary['count'] > 0 and cat != '全部':
-                    sentiment = summary['sentiment']
-                    print(f"\n【{cat}】{summary['count']}条")
-                    print(f"  情绪: 🟢{sentiment['bullish']} 🔴{sentiment['bearish']} ⚪{sentiment['neutral']}")
-                    if summary['important_news']:
-                        print(f"  重要: {summary['important_news'][0]['title'][:50]}...")
+    # 获取汇总
+    print("=" * 60)
+    print("新闻汇总")
+    print("=" * 60)
     
-    else:
-        parser.print_help()
+    summary = summarizer.process_and_summarize(hours=24)
+    print(summary['text_summary'])
+    
+    # 关键事件
+    print("\n" + "=" * 60)
+    print("关键事件")
+    print("=" * 60)
+    
+    events = summarizer.get_key_events(hours=24, min_mentions=2)
+    for event in events:
+        print(f"\n【{event['type']}】{event['mentions']} 次提及")
+        sentiment = event['sentiment']
+        print(f"  情绪: 利好{sentiment['bullish']} 利空{sentiment['bearish']} 中性{sentiment['neutral']}")
 
 
 if __name__ == "__main__":

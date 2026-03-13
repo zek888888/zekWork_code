@@ -293,8 +293,11 @@ sentiment取值说明：
             category=row['category'] or 'general'
         )
     
-    def _analyze_news_content(self, news_id: int, title: str, content: str, category: str) -> AnalysisResult:
-        """分析新闻内容（多AI投票）"""
+    def analyze_content(self, title: str, content: str, category: str = 'general') -> AnalysisResult:
+        """
+        通用内容分析（多AI投票）- 可被新闻和推特复用
+        只进行分析，不保存结果
+        """
         # 获取活跃AI配置
         configs = self.config_manager.get_active_configs()
         
@@ -330,8 +333,15 @@ sentiment取值说明：
         # 多数投票决策
         result = self._majority_vote(votes)
         
+        return result
+    
+    def _analyze_news_content(self, news_id: int, title: str, content: str, category: str) -> AnalysisResult:
+        """分析新闻内容（多AI投票）并保存结果"""
+        result = self.analyze_content(title, content, category)
+        
         # 保存分析结果到数据库
-        self._save_analysis_result(news_id, result)
+        if result.ai_votes:  # 只有在有投票结果时才保存
+            self._save_analysis_result(news_id, result)
         
         return result
     

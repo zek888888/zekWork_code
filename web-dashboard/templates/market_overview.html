@@ -49,6 +49,17 @@
     color: var(--text-muted, #64748b);
 }
 
+/* ========== 动画定义 ========== */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
 .refresh-btn {
     display: flex;
     align-items: center;
@@ -66,6 +77,55 @@
 .refresh-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--primary-color);
+}
+
+/* ========== 获取新闻按钮（与下拉框同高） ========== */
+.fetch-news-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+    border: 1px solid #ffed4e;
+    border-radius: 4px;
+    color: #1a1a2e;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 
+        0 0 0 1px rgba(255, 215, 0, 0.4),
+        0 2px 8px rgba(255, 183, 0, 0.4);
+    text-transform: none;
+    text-shadow: none;
+    height: auto;
+    line-height: 1.4;
+}
+
+.fetch-news-btn:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    box-shadow: 
+        0 0 0 2px rgba(255, 215, 0, 0.5),
+        0 3px 12px rgba(255, 183, 0, 0.5);
+}
+
+.fetch-news-btn:active {
+    background: linear-gradient(135deg, #ffb700 0%, #ff9500 100%);
+}
+
+.fetch-news-btn i {
+    font-size: 11px;
+    color: #1a1a2e;
+}
+
+.fetch-news-btn span {
+    color: #1a1a2e;
+}
+
+.fetch-news-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.3);
 }
 
 /* ========== 主网格布局 - 2行2列 ========== */
@@ -593,6 +653,50 @@
     cursor: pointer;
 }
 
+/* ========== 新闻/推特标签切换 ========== */
+.news-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.news-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.news-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.tab-badge {
+    padding: 1px 6px;
+    background: rgba(29, 161, 242, 0.2);
+    color: #1da1f2;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+}
+
+.news-tab.active .tab-badge {
+    background: rgba(29, 161, 242, 0.3);
+}
+
 /* ========== 空状态 ========== */
 .empty-state {
     text-align: center;
@@ -647,35 +751,66 @@
 
     <!-- 主网格 - 2行3列 -->
     <div class="overview-grid">
-        <!-- 左上：新闻聚焦 -->
+        <!-- 左上：新闻聚焦（含推特监控） -->
         <div class="card">
             <div class="card-header">
                 <div class="section-title">
                     <span class="section-icon icon-news"><i class="ti ti-news"></i></span>
-                    <h2>新闻聚焦</h2>
+                    <h2 id="newsPanelTitle">新闻聚焦</h2>
                 </div>
                 <div style="display: flex; gap: 4px; align-items: center;">
-                    <!-- 时间筛选器 -->
-                    <select id="newsTimeFilter" class="time-filter" onchange="loadNews()">
-                        <option value="1">1小时</option>
-                        <option value="6">6小时</option>
-                        <option value="12">12小时</option>
-                        <option value="24" selected>24小时</option>
-                        <option value="72">3天</option>
-                    </select>
-                    <!-- 情绪筛选器 -->
-                    <select id="newsSentimentFilter" class="time-filter" onchange="loadNews()">
-                        <option value="all">全部</option>
-                        <option value="bullish">看涨</option>
-                        <option value="bearish">看跌</option>
-                        <option value="neutral">中性</option>
-                    </select>
-                    <!-- 获取新闻按钮（人工触发） -->
-                    <button class="refresh-btn" onclick="fetchNewsManually()" style="padding: 4px 10px; background: var(--primary-color); color: #000;" title="立即获取最新新闻">
-                        <i class="ti ti-refresh" style="font-size: 10px;"></i> 获取
+                    <!-- 新闻筛选器 -->
+                    <div id="newsFilters">
+                        <select id="newsTimeFilter" class="time-filter" onchange="loadNews()">
+                            <option value="1">1小时</option>
+                            <option value="6">6小时</option>
+                            <option value="12">12小时</option>
+                            <option value="24" selected>24小时</option>
+                            <option value="72">3天</option>
+                        </select>
+                        <select id="newsSentimentFilter" class="time-filter" onchange="loadNews()">
+                            <option value="all">全部</option>
+                            <option value="bullish">看涨</option>
+                            <option value="bearish">看跌</option>
+                            <option value="neutral">中性</option>
+                        </select>
+                    </div>
+                    <!-- 推特筛选器（默认隐藏） -->
+                    <div id="twitterFilters" style="display: none;">
+                        <select id="twitterTimeFilter" class="time-filter" onchange="loadTwitterPosts()">
+                            <option value="1">1小时</option>
+                            <option value="6">6小时</option>
+                            <option value="12">12小时</option>
+                            <option value="24" selected>24小时</option>
+                            <option value="168">7天</option>
+                            <option value="all">全部</option>
+                        </select>
+                        <select id="twitterSentimentFilter" class="time-filter" onchange="loadTwitterPosts()">
+                            <option value="all">全部</option>
+                            <option value="bullish">利好</option>
+                            <option value="bearish">利空</option>
+                            <option value="neutral">中性</option>
+                        </select>
+                    </div>
+                    <!-- 刷新按钮（同时获取新闻和推文） -->
+                    <button class="fetch-news-btn" id="refreshBtn" onclick="refreshAllContent()" title="同时获取最新新闻和推文">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span>刷新</span>
                     </button>
                 </div>
             </div>
+            
+            <!-- 标签切换 -->
+            <div style="display: flex; border-bottom: 1px solid var(--border-color);">
+                <button class="news-tab active" id="newsTab" onclick="switchNewsTab('news')">
+                    <i class="bi bi-newspaper"></i> 新闻
+                </button>
+                <button class="news-tab" id="twitterTab" onclick="switchNewsTab('twitter')">
+                    <i class="bi bi-twitter"></i> 推特监控
+                    <span class="tab-badge" id="twitterBadge">0</span>
+                </button>
+            </div>
+            
             <!-- 新闻统计条 -->
             <div class="news-stats-bar" id="newsStatsBar" style="display: none;">
                 <span class="stat-item">
@@ -691,9 +826,40 @@
                     上次更新: <span id="newsLastUpdate">--</span>
                 </span>
             </div>
-            <div class="card-body" id="newsContainer">
+            
+            <!-- 提示信息 -->
+            <div style="padding: 6px 12px; background: rgba(29, 161, 242, 0.1); border-bottom: 1px solid var(--border-color); font-size: 11px; color: var(--text-muted);">
+                <i class="bi bi-info-circle" style="color: #1da1f2; margin-right: 4px;"></i>
+                点击任意推文卡片可跳转查看原帖，辅助人工二次分析（标记"测试"的为模拟数据）
+            </div>
+            
+            <!-- 推特统计条（默认隐藏） -->
+            <div class="news-stats-bar" id="twitterStatsBar" style="display: none;">
+                <span class="stat-item">
+                    <i class="bi bi-twitter"></i> <span id="twitterTotal">0</span>
+                </span>
+                <span class="stat-item positive">
+                    <i class="ti ti-trending-up"></i> <span id="twitterBullish">0</span>
+                </span>
+                <span class="stat-item negative">
+                    <i class="ti ti-trending-down"></i> <span id="twitterBearish">0</span>
+                </span>
+                <span class="stat-item" style="margin-left: auto; font-size: 9px;">
+                    待分析: <span id="twitterPending">0</span>
+                </span>
+            </div>
+            
+            <div class="card-body" id="newsContainer" style="overflow-y: auto; max-height: calc(100% - 80px);">
                 <div class="empty-state">
                     <i class="ti ti-loader-2 ti-spin"></i>
+                    <div style="font-size: 10px; margin-top: 8px;">加载中...</div>
+                </div>
+            </div>
+            
+            <div class="card-body" id="twitterContainer" style="display: none; overflow-y: auto; max-height: calc(100% - 80px);">
+                <div class="empty-state">
+                    <i class="bi bi-twitter" style="font-size: 24px; color: #1da1f2;"></i>
+                    <div style="font-size: 10px; margin-top: 8px;">点击"获取推文"加载数据</div>
                 </div>
             </div>
         </div>
@@ -973,13 +1139,15 @@ function renderNewsList(newsList) {
 
 // 人工触发获取新闻
 function fetchNewsManually() {
-    const btn = document.querySelector('.card-header .refresh-btn');
+    const btn = document.querySelector('.fetch-news-btn');
     const icon = btn.querySelector('i');
+    const text = btn.querySelector('span');
+    const originalText = text.textContent;
     
     // 按钮动画
-    icon.classList.add('ti-spin');
+    icon.classList.add('spin');
     btn.disabled = true;
-    btn.style.opacity = '0.6';
+    text.textContent = '获取中...';
     
     // 显示提示
     showNotification('📰 正在获取最新新闻...', 'info');
@@ -988,9 +1156,9 @@ function fetchNewsManually() {
     fetch('/api/news/fetch', { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-            icon.classList.remove('ti-spin');
+            icon.classList.remove('spin');
             btn.disabled = false;
-            btn.style.opacity = '1';
+            text.textContent = originalText;
             
             if (data.success) {
                 const msg = `✅ 获取完成！新入库 ${data.saved || 0} 条，重复 ${data.duplicates || 0} 条`;
@@ -1002,9 +1170,9 @@ function fetchNewsManually() {
             }
         })
         .catch(err => {
-            icon.classList.remove('ti-spin');
+            icon.classList.remove('spin');
             btn.disabled = false;
-            btn.style.opacity = '1';
+            text.textContent = originalText;
             showNotification('❌ 网络错误: ' + err.message, 'error');
         });
 }
@@ -1053,6 +1221,356 @@ function refreshNews() {
 // 旧的渲染函数（兼容）
 function renderNews() {
     loadNews();
+}
+
+// ========== 新闻/推特标签切换 ==========
+var currentTab = 'news';  // 使用 var 确保全局作用域
+
+function switchNewsTab(tab) {
+    currentTab = tab;
+    
+    // 更新标签样式
+    document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.add('active');
+    
+    // 显示/隐藏容器
+    if (tab === 'news') {
+        document.getElementById('newsContainer').style.display = 'block';
+        document.getElementById('twitterContainer').style.display = 'none';
+        document.getElementById('newsStatsBar').style.display = 'flex';
+        document.getElementById('twitterStatsBar').style.display = 'none';
+        document.getElementById('newsFilters').style.display = 'block';
+        document.getElementById('twitterFilters').style.display = 'none';
+        // 刷新按钮始终显示，不需要切换
+        document.getElementById('newsPanelTitle').textContent = '新闻聚焦';
+        loadNews();
+    } else {
+        document.getElementById('newsContainer').style.display = 'none';
+        document.getElementById('twitterContainer').style.display = 'block';
+        document.getElementById('newsStatsBar').style.display = 'none';
+        document.getElementById('twitterStatsBar').style.display = 'flex';
+        document.getElementById('newsFilters').style.display = 'none';
+        document.getElementById('twitterFilters').style.display = 'block';
+        // 刷新按钮始终显示，不需要切换
+        document.getElementById('newsPanelTitle').textContent = '推特监控';
+        loadTwitterPosts();
+    }
+}
+
+// ========== 推特数据功能 ==========
+
+// 获取推文数据
+function loadTwitterPosts() {
+    const hours = document.getElementById('twitterTimeFilter').value;
+    const sentiment = document.getElementById('twitterSentimentFilter').value;
+    
+    console.log('加载推文数据...', { hours, sentiment });
+    
+    document.getElementById('twitterContainer').innerHTML = `
+        <div class="empty-state">
+            <i class="ti ti-loader-2 ti-spin"></i>
+            <div style="font-size: 10px; margin-top: 8px;">加载中...</div>
+        </div>
+    `;
+    
+    let url = `/api/twitter/posts?hours=${hours}&limit=50`;
+    if (sentiment !== 'all') {
+        url += `&sentiment=${sentiment}`;
+    }
+    
+    console.log('请求URL:', url);
+    
+    fetch(url)
+        .then(res => {
+            console.log('响应状态:', res.status);
+            return res.json();
+        })
+        .then(posts => {
+            console.log('获取推文数量:', posts ? posts.length : 0);
+            renderTwitterPosts(posts);
+            updateTwitterStats(posts);
+        })
+        .catch(err => {
+            console.error('加载推文失败:', err);
+            document.getElementById('twitterContainer').innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <div style="font-size: 10px; margin-top: 8px;">加载失败: ${err.message}</div>
+                </div>
+            `;
+        });
+}
+
+// 渲染推文列表
+function renderTwitterPosts(posts) {
+    console.log('renderTwitterPosts 接收数据:', posts);
+    
+    // 确保 posts 是数组
+    if (!Array.isArray(posts)) {
+        console.error('posts 不是数组:', posts);
+        document.getElementById('twitterContainer').innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div style="font-size: 10px; margin-top: 8px;">数据格式错误</div>
+            </div>
+        `;
+        return;
+    }
+    
+    if (posts.length === 0) {
+        document.getElementById('twitterContainer').innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-twitter"></i>
+                <div style="font-size: 10px; margin-top: 8px;">暂无推文数据</div>
+                <div style="font-size: 9px; color: var(--text-muted);">点击"获取推文"开始监控</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const html = posts.map(post => {
+        const timeStr = new Date(post.posted_at || post.created_at).toLocaleString('zh-CN', {
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        let sentimentClass = '';
+        let sentimentIcon = '⚪';
+        let sentimentLabel = '待分析';
+        let sentimentColor = '#888';
+        
+        if (post.sentiment === 'bullish') {
+            sentimentClass = 'positive';
+            sentimentIcon = '🟢';
+            sentimentLabel = '利好';
+            sentimentColor = '#00d084';
+        } else if (post.sentiment === 'bearish') {
+            sentimentClass = 'negative';
+            sentimentIcon = '🔴';
+            sentimentLabel = '利空';
+            sentimentColor = '#ef4444';
+        } else if (post.sentiment === 'neutral') {
+            sentimentClass = '';
+            sentimentIcon = '⚪';
+            sentimentLabel = '中性';
+            sentimentColor = '#888';
+        }
+        
+        const displayName = post.display_name || post.username;
+        
+        // AI总结
+        const summary = post.summary || '暂无AI总结';
+        // 分析原因
+        const analysisReason = post.analysis_reason || '';
+        
+        // 判断是否为测试数据（tweet_id包含test或mock）
+        const isTestData = post.tweet_id && (post.tweet_id.includes('test') || post.tweet_id.includes('mock'));
+        
+        // 构建链接：真实数据用twitter，测试数据用nitter或搜索
+        let tweetUrl;
+        if (isTestData) {
+            // 测试数据使用nitter镜像（无需登录）或搜索页面
+            tweetUrl = `https://nitter.net/${post.username}`;
+        } else {
+            tweetUrl = post.tweet_url || `https://twitter.com/${post.username}/status/${post.tweet_id}`;
+        }
+        
+        const clickHandler = isTestData 
+            ? `showNotification('📌 测试数据提示：此为模拟推文，点击跳转到用户主页', 'info'); window.open('${tweetUrl}', '_blank')`
+            : `window.open('${tweetUrl}', '_blank')`;
+        
+        const titleText = isTestData ? '测试数据：点击跳转到用户主页' : '点击跳转查看原帖';
+        
+        return `
+            <div class="news-item ${sentimentClass}" style="border-left: 3px solid ${sentimentColor}; padding-left: 10px; cursor: pointer; transition: background 0.2s;"
+                 onclick="${clickHandler}"
+                 onmouseover="this.style.background='rgba(255,255,255,0.05)'" 
+                 onmouseout="this.style.background=''"
+                 title="${titleText}">
+                <!-- 头部：用户和时间 -->
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <i class="bi bi-twitter" style="color: #1da1f2;"></i>
+                    <span style="font-weight: 600; font-size: 12px;">@${post.username}</span>
+                    <span style="color: var(--text-muted); font-size: 10px;">${displayName}</span>
+                    ${isTestData ? `<span style="font-size: 9px; padding: 1px 6px; background: rgba(255,215,0,0.2); color: var(--primary-color); border-radius: 4px;">测试</span>` : ''}
+                    <span style="margin-left: auto; color: var(--text-muted); font-size: 9px;">${timeStr}</span>
+                    <i class="bi bi-box-arrow-up-right" style="font-size: 10px; color: var(--text-muted); margin-left: 4px;"></i>
+                </div>
+                
+                <!-- AI总结（核心展示） -->
+                <div style="background: rgba(255,255,255,0.03); border-radius: 6px; padding: 8px; margin-bottom: 6px;">
+                    <div style="font-size: 11px; line-height: 1.6; color: var(--text-primary);">
+                        <i class="bi bi-robot" style="color: var(--primary-color); margin-right: 4px;"></i>
+                        ${summary}
+                    </div>
+                </div>
+                
+                <!-- 原始内容（折叠） -->
+                <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid var(--border-color);">
+                    原文: ${post.content}
+                </div>
+                
+                <!-- 底部：情绪标签和分析原因 -->
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span class="news-badge ${sentimentClass}" style="font-size: 10px; padding: 2px 8px;">
+                        ${sentimentIcon} ${sentimentLabel}
+                    </span>
+                    ${analysisReason ? `<span style="font-size: 10px; color: ${sentimentColor}; font-weight: 500;">${analysisReason}</span>` : ''}
+                    ${post.confidence ? `<span style="font-size: 9px; color: var(--text-muted);">置信度: ${(post.confidence * 100).toFixed(0)}%</span>` : ''}
+                    <span style="margin-left: auto; font-size: 9px; color: var(--text-muted);">
+                        <i class="bi bi-heart"></i> ${post.like_count || 0}
+                        <i class="bi bi-repeat" style="margin-left: 6px;"></i> ${post.retweet_count || 0}
+                    </span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('twitterContainer').innerHTML = `<div class="news-list">${html}</div>`;
+}
+
+// 更新推特统计
+function updateTwitterStats(posts) {
+    const total = posts.length;
+    const bullish = posts.filter(p => p.sentiment === 'bullish').length;
+    const bearish = posts.filter(p => p.sentiment === 'bearish').length;
+    const pending = posts.filter(p => !p.sentiment).length;
+    
+    document.getElementById('twitterTotal').textContent = total;
+    document.getElementById('twitterBullish').textContent = bullish;
+    document.getElementById('twitterBearish').textContent = bearish;
+    document.getElementById('twitterPending').textContent = pending;
+    document.getElementById('twitterBadge').textContent = total;
+}
+
+// 合并刷新按钮 - 同时获取新闻和推文
+function refreshAllContent() {
+    const btn = document.getElementById('refreshBtn');
+    const icon = btn.querySelector('i');
+    const text = btn.querySelector('span');
+    
+    icon.classList.add('spin');
+    btn.disabled = true;
+    text.textContent = '刷新中...';
+    
+    showNotification('🔄 正在获取最新数据...', 'info');
+    
+    // 同时发起新闻和推文获取请求
+    const newsPromise = fetch('/api/news/fetch', { method: 'POST' })
+        .then(res => res.json())
+        .catch(err => ({ error: err.message, source: 'news' }));
+    
+    const twitterPromise = fetch('/api/twitter/fetch', { method: 'POST' })
+        .then(res => res.json())
+        .catch(err => ({ error: err.message, source: 'twitter' }));
+    
+    Promise.all([newsPromise, twitterPromise])
+        .then(([newsData, twitterData]) => {
+            icon.classList.remove('spin');
+            btn.disabled = false;
+            text.textContent = '刷新';
+            
+            // 处理新闻结果
+            let newsMsg = '';
+            if (newsData.success) {
+                newsMsg = `📰 新闻: ${newsData.saved || 0} 条新入库`;
+                if (currentTab === 'news') loadNews();
+            } else if (newsData.error) {
+                newsMsg = `📰 新闻获取失败`;
+            }
+            
+            // 处理推文结果
+            let twitterMsg = '';
+            if (twitterData.success) {
+                twitterMsg = `🐦 推文: ${twitterData.total_new || 0} 条新入库`;
+                // 如果有新推文，触发AI分析
+                if (twitterData.total_new > 0) {
+                    setTimeout(() => analyzeTwitterPosts(), 1000);
+                }
+                if (currentTab === 'twitter') loadTwitterPosts();
+            } else if (twitterData.error) {
+                twitterMsg = `🐦 推文获取失败`;
+            }
+            
+            // 显示合并结果
+            const successCount = (newsData.success ? 1 : 0) + (twitterData.success ? 1 : 0);
+            if (successCount === 2) {
+                showNotification(`✅ ${newsMsg} | ${twitterMsg}`, 'success');
+            } else if (successCount === 1) {
+                showNotification(`⚠️ ${newsMsg} | ${twitterMsg}`, 'warning');
+            } else {
+                showNotification('❌ 数据获取失败', 'error');
+            }
+        })
+        .catch(err => {
+            icon.classList.remove('spin');
+            btn.disabled = false;
+            text.textContent = '刷新';
+            showNotification('❌ 网络错误: ' + err.message, 'error');
+        });
+}
+
+// 保留原函数供单独调用（系统配置页面等）
+function fetchNewsManually() {
+    const btn = document.querySelector('.card-header .refresh-btn');
+    if (!btn) return;
+    
+    const icon = btn.querySelector('i');
+    icon.classList.add('ti-spin');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    
+    showNotification('📰 正在获取最新新闻...', 'info');
+    
+    fetch('/api/news/fetch', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            icon.classList.remove('ti-spin');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            
+            if (data.success) {
+                const msg = `✅ 获取完成！新入库 ${data.saved || 0} 条，重复 ${data.duplicates || 0} 条`;
+                showNotification(msg, 'success');
+                loadNews();
+            } else {
+                showNotification('❌ 获取失败: ' + (data.error || '未知错误'), 'error');
+            }
+        })
+        .catch(err => {
+            icon.classList.remove('ti-spin');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            showNotification('❌ 网络错误: ' + err.message, 'error');
+        });
+}
+
+// 保留原函数供单独调用
+function fetchTwitterManually() {
+    refreshAllContent(); // 合并刷新已经包含推文获取
+}
+
+// 分析推文
+function analyzeTwitterPosts() {
+    showNotification('🤖 正在分析推文情绪...', 'info');
+    
+    fetch('/api/twitter/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hours: 24, limit: 50 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`✅ 分析完成！利好:${data.results.bullish} 利空:${data.results.bearish} 中性:${data.results.neutral}`, 'success');
+            loadTwitterPosts();
+        }
+    })
+    .catch(err => {
+        console.error('分析失败:', err);
+    });
 }
 
 // ========== 渲染土狗币 ==========
@@ -1379,24 +1897,64 @@ function refreshAllData() {
 
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', function() {
-    loadNews();          // 从API加载新闻
+    console.log('市场总览页面开始初始化...');
+    
+    // 初始化变量
+    currentTab = 'news';
+    
+    // 检查关键元素
+    const checkElement = (id) => {
+        const el = document.getElementById(id);
+        if (!el) console.error(`元素缺失: #${id}`);
+        return !!el;
+    };
+    
+    const hasAllElements = [
+        'newsContainer', 'twitterContainer', 
+        'newsTab', 'twitterTab',
+        'twitterTimeFilter', 'twitterSentimentFilter'
+    ].every(checkElement);
+    
+    if (!hasAllElements) {
+        console.error('部分关键元素缺失，可能导致功能异常');
+    }
+    
+    // 加载数据
+    try {
+        loadNews();
+        console.log('新闻数据加载请求已发送');
+    } catch (e) {
+        console.error('新闻数据加载失败:', e);
+    }
+    
     renderMemeCoins();
     renderWallets();
     renderSectors();
     initBTCChart();
+    
+    // 更新最后刷新时间
     document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN');
     
-    // 每30秒自动刷新新闻
+    // 每30秒自动刷新
     setInterval(() => {
-        if (!document.hidden) {  // 页面可见时才刷新
-            loadNews();
+        if (!document.hidden) {
+            if (currentTab === 'news') {
+                loadNews();
+            } else if (currentTab === 'twitter') {
+                loadTwitterPosts();
+            }
         }
     }, 30000);
     
+    // 窗口大小改变时调整图表
     window.addEventListener('resize', () => btcChart && btcChart.resize());
+    
+    // 点击模态框外部关闭
     document.getElementById('detailModal').addEventListener('click', (e) => {
         if (e.target.id === 'detailModal') closeModal();
     });
+    
+    console.log('市场总览页面初始化完成');
 });
 </script>
 {% endblock %}

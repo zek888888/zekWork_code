@@ -438,6 +438,35 @@ def add_ai_config_api():
     
     return jsonify({'success': True, 'id': config_id})
 
+@app.route('/api/ai_configs/<int:config_id>', methods=['GET'])
+@login_required
+def get_ai_config_api(config_id):
+    """获取单个AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    manager = AIConfigManager()
+    config = manager.get_ai_config(config_id)
+    
+    if config:
+        return jsonify({
+            'id': config.id,
+            'name': config.name,
+            'provider': config.provider,
+            'model': config.model,
+            'base_url': config.base_url,
+            'temperature': config.temperature,
+            'max_tokens': config.max_tokens,
+            'timeout': config.timeout,
+            'weight': config.weight,
+            'status': config.status,
+            'priority': config.priority,
+            'description': config.description
+        })
+    else:
+        return jsonify({'error': 'Config not found'}), 404
+
 @app.route('/api/ai_configs/<int:config_id>', methods=['PUT'])
 @login_required
 def update_ai_config_api(config_id):
@@ -526,6 +555,323 @@ def get_news_summary_api():
     result = summarizer.process_and_summarize(hours=hours)
     
     return jsonify(result)
+
+# ==================== 推特数据模块 API ====================
+
+@app.route('/api/twitter/watchlist')
+@login_required
+def get_twitter_watchlist_api():
+    """获取所有推特观察人"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager
+    
+    manager = TwitterWatchlistManager()
+    items = manager.get_all_watchlist()
+    
+    return jsonify(items)
+
+@app.route('/api/twitter/watchlist/<int:item_id>')
+@login_required
+def get_twitter_watchlist_item_api(item_id):
+    """获取单个观察人"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager
+    
+    manager = TwitterWatchlistManager()
+    item = manager.get_watchlist_item(item_id)
+    
+    if item:
+        return jsonify({
+            'id': item.id,
+            'username': item.username,
+            'display_name': item.display_name,
+            'category': item.category,
+            'priority': item.priority,
+            'is_active': item.is_active,
+            'description': item.description,
+            'last_fetch_at': item.last_fetch_at
+        })
+    else:
+        return jsonify({'error': 'Not found'}), 404
+
+@app.route('/api/twitter/watchlist', methods=['POST'])
+@login_required
+def add_twitter_watchlist_api():
+    """添加推特观察人"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager, TwitterWatchlistItem
+    
+    data = request.json
+    
+    item = TwitterWatchlistItem(
+        username=data.get('username', '').replace('@', ''),
+        display_name=data.get('display_name', ''),
+        category=data.get('category', 'trader'),
+        priority=int(data.get('priority', 1)),
+        is_active=data.get('is_active', True),
+        description=data.get('description', '')
+    )
+    
+    manager = TwitterWatchlistManager()
+    item_id = manager.add_watchlist_item(item)
+    
+    return jsonify({'success': True, 'id': item_id})
+
+@app.route('/api/twitter/watchlist/<int:item_id>', methods=['PUT'])
+@login_required
+def update_twitter_watchlist_api(item_id):
+    """更新推特观察人"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager
+    
+    data = request.json
+    manager = TwitterWatchlistManager()
+    
+    success = manager.update_watchlist_item(item_id, data)
+    
+    return jsonify({'success': success})
+
+@app.route('/api/twitter/watchlist/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_twitter_watchlist_api(item_id):
+    """删除推特观察人"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager
+    
+    manager = TwitterWatchlistManager()
+    success = manager.delete_watchlist_item(item_id)
+    
+    return jsonify({'success': success})
+
+@app.route('/api/twitter/watchlist/init_default', methods=['POST'])
+@login_required
+def init_default_twitter_watchlist_api():
+    """初始化默认推特观察人列表"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from twitter_watchlist_manager import TwitterWatchlistManager
+    
+    manager = TwitterWatchlistManager()
+    manager.init_default_watchlist()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/twitter/fetch', methods=['POST'])
+@login_required
+def fetch_twitter_api():
+    """手动触发获取推特数据"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/twitter-sentiment'))
+    from twitter_fetcher import TwitterFetcher
+    
+    fetcher = TwitterFetcher()
+    result = fetcher.fetch_all_active(hours_back=1)
+    
+    return jsonify({
+        'success': True,
+        'total_fetched': result['total_fetched'],
+        'total_new': result['total_new'],
+        'total_duplicates': result['total_duplicates'],
+        'by_user': result['by_user']
+    })
+
+@app.route('/api/twitter/posts')
+@login_required
+def get_twitter_posts_api():
+    """获取推特推文列表"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/twitter-sentiment'))
+    from twitter_fetcher import TwitterFetcher
+    
+    # hours 可以是数字或 'all'
+    hours_param = request.args.get('hours', default='24')
+    try:
+        hours = int(hours_param)
+    except ValueError:
+        hours = hours_param  # 保持为字符串 'all'
+    
+    username = request.args.get('username')
+    sentiment = request.args.get('sentiment')
+    limit = request.args.get('limit', type=int, default=100)
+    
+    fetcher = TwitterFetcher()
+    posts = fetcher.get_recent_tweets(
+        hours=hours,
+        username=username,
+        sentiment=sentiment,
+        limit=limit
+    )
+    
+    return jsonify(posts)
+
+@app.route('/api/twitter/analyze', methods=['POST'])
+@login_required
+def analyze_twitter_api():
+    """触发推特AI分析"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/ai_models'))
+    from twitter_analyzer import TwitterAnalyzer
+    
+    data = request.json
+    hours = data.get('hours', 24)
+    limit = data.get('limit', 50)
+    
+    analyzer = TwitterAnalyzer()
+    result = analyzer.batch_analyze_pending(hours=hours, limit=limit)
+    
+    return jsonify({
+        'success': True,
+        'total': result['total'],
+        'analyzed': result['analyzed'],
+        'results': result['results']
+    })
+
+@app.route('/api/twitter/stats')
+@login_required
+def get_twitter_stats_api():
+    """获取推特统计信息"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/twitter-sentiment'))
+    from twitter_fetcher import TwitterFetcher
+    
+    hours = request.args.get('hours', type=int, default=24)
+    
+    fetcher = TwitterFetcher()
+    stats = fetcher.get_stats(hours=hours)
+    
+    return jsonify(stats)
+
+@app.route('/api/twitter/test', methods=['POST'])
+@login_required
+def test_twitter_api():
+    """测试Twitter API连接"""
+    try:
+        import sys
+        sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+        from twitter_api_client import TwitterAPIClient
+        
+        client = TwitterAPIClient()
+        
+        # 测试获取用户
+        user = client.get_user_by_username("twitter")
+        
+        if user:
+            return jsonify({
+                'success': True,
+                'message': f'API连接正常！可访问用户: {user.get("name", "Unknown")}'
+            })
+        else:
+            # 用户获取失败，可能是订阅限制
+            return jsonify({
+                'success': False,
+                'message': 'API认证成功但无法获取数据。请检查Twitter API订阅状态（需要Basic $100/月或更高）'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'API连接失败: {str(e)}'
+        })
+
+@app.route('/api/twitter/config', methods=['POST'])
+@login_required
+def save_twitter_config():
+    """保存Twitter API配置"""
+    data = request.json
+    
+    try:
+        # 保存到.env.twitter文件
+        env_path = os.path.expanduser('~/.openclaw/workspace/quant-trading/.env.twitter')
+        
+        with open(env_path, 'w') as f:
+            f.write(f"# Twitter API 凭证\n")
+            f.write(f"TWITTER_BEARER_TOKEN={data.get('bearer_token', '')}\n")
+            f.write(f"TWITTER_API_STATUS={data.get('status', 'inactive')}\n")
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/news/fetch_free', methods=['POST'])
+@login_required
+def fetch_free_news_api():
+    """手动触发免费新闻获取"""
+    try:
+        import sys
+        sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/news-sentiment-scan'))
+        from free_news_fetcher import FreeNewsFetcher
+        
+        fetcher = FreeNewsFetcher()
+        result = fetcher.fetch_all()
+        
+        return jsonify({
+            'success': True,
+            'message': f"获取完成！共 {result['saved']} 条新闻",
+            'total': result['total'],
+            'saved': result['saved'],
+            'stats': result['stats']
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/twitter/quota')
+@login_required
+def get_twitter_quota_api():
+    """获取Twitter API额度状态"""
+    from datetime import datetime, timedelta
+    
+    # 计算下次重置时间
+    now = datetime.now()
+    if now.day == 1:
+        next_reset = now
+    else:
+        if now.month == 12:
+            next_reset = datetime(now.year + 1, 1, 1)
+        else:
+            next_reset = datetime(now.year, now.month + 1, 1)
+    
+    days_remaining = (next_reset - now).days + 1
+    
+    # 检查是否有真实数据（判断额度是否可用）
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT COUNT(*) FROM twitter_posts 
+        WHERE tweet_id NOT LIKE 'test_%' 
+        AND tweet_id NOT LIKE 'demo_%'
+        AND tweet_id NOT LIKE 'mock_%'
+        AND created_at >= datetime('now', '-1 hours')
+    ''')
+    
+    recent_real_tweets = cursor.fetchone()[0]
+    conn.close()
+    
+    # 额度状态判断
+    if recent_real_tweets > 0:
+        status = 'active'
+        status_text = '额度充足'
+    else:
+        status = 'limited'
+        status_text = '已用完（演示数据）'
+    
+    return jsonify({
+        'current_status': status,
+        'status_text': status_text,
+        'next_reset_date': next_reset.strftime('%Y-%m-%d'),
+        'days_until_reset': days_remaining,
+        'monthly_quota': 1500,
+        'recent_real_tweets': recent_real_tweets,
+        'data_source': 'demo' if status == 'limited' else 'api'
+    })
 
 @app.route('/api/realtime-prices')
 @login_required

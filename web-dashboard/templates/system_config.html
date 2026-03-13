@@ -272,15 +272,25 @@
     border-radius: 4px;
     font-size: 11px;
 }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="config-container">
     <div class="config-header">
-        <h1><i class="ti ti-settings"></i> 系统配置</h1>
+        <h1><i class="bi bi-gear"></i> 系统配置</h1>
         <button class="btn btn-primary" onclick="openAddModal()">
-            <i class="ti ti-plus"></i> 添加AI配置
+            <i class="bi bi-plus-lg"></i> 添加AI配置
         </button>
     </div>
 
@@ -302,7 +312,7 @@
 
     <!-- AI配置列表 -->
     <div class="config-section">
-        <h2><i class="ti ti-brain"></i> 新闻分析AI配置</h2>
+        <h2><i class="bi bi-cpu"></i> 新闻分析AI配置</h2>
         <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
             配置多个AI模型进行新闻情绪分析，系统将通过多数投票决策最终标签（利好/利空/中性）
         </p>
@@ -326,31 +336,138 @@
         </table>
         
         <div class="empty-state" id="emptyState" style="display: none;">
-            <i class="ti ti-robot-off"></i>
+            <i class="bi bi-robot" style="font-size: 3rem;"></i>
             <p>暂无AI配置</p>
             <button class="btn btn-primary" onclick="initDefaultConfig()">
-                <i class="ti ti-refresh"></i> 初始化默认配置 (Kimi K2.5)
+                <i class="bi bi-arrow-clockwise"></i> 初始化默认配置 (Kimi K2.5)
             </button>
         </div>
     </div>
 
     <!-- 新闻分析控制 -->
     <div class="config-section">
-        <h2><i class="ti ti-news"></i> 新闻分析控制</h2>
+        <h2><i class="bi bi-newspaper"></i> 新闻分析控制</h2>
         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
             <button class="btn btn-primary" onclick="triggerNewsAnalysis()">
-                <i class="ti ti-analyze"></i> 分析最近新闻
+                <i class="bi bi-search"></i> 分析最近新闻
             </button>
             <button class="btn btn-secondary" onclick="loadNewsSummary()">
-                <i class="ti ti-chart-bar"></i> 查看新闻汇总
+                <i class="bi bi-bar-chart"></i> 查看新闻汇总
             </button>
         </div>
         <div id="analysisResult"></div>
     </div>
 
+    <!-- Twitter API配置 -->
+    <div class="config-section">
+        <h2><i class="bi bi-twitter"></i> Twitter API 配置</h2>
+        
+        <!-- 额度状态卡片 -->
+        <div id="quotaStatusCards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div id="currentQuotaCard" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">当前额度</div>
+                <div id="currentQuotaValue" style="font-size: 18px; font-weight: 600; color: #ef4444;">检测中...</div>
+                <div id="currentQuotaSub" style="font-size: 10px; color: #ef4444;">--</div>
+            </div>
+            <div id="resetDateCard" style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">下次重置</div>
+                <div id="resetDaysValue" style="font-size: 18px; font-weight: 600; color: var(--primary-color);">--</div>
+                <div id="resetDateValue" style="font-size: 10px; color: var(--primary-color);">--</div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">次月额度</div>
+                <div style="font-size: 18px; font-weight: 600; color: #00d084;">1,500</div>
+                <div style="font-size: 10px; color: #00d084;">条/月</div>
+            </div>
+        </div>
+        
+        <div style="padding: 12px; background: rgba(29,161,242,0.05); border-left: 3px solid #1da1f2; border-radius: 0 6px 6px 0; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary);">
+            <i class="bi bi-info-circle" style="color: #1da1f2; margin-right: 6px;"></i>
+            <strong>数据源说明：</strong>Twitter API v2 Essential层级每月1,500条免费读取。额度每月1号自动重置。
+            <a href="https://developer.twitter.com/en/portal/products" target="_blank" style="color: #1da1f2;">查看定价 →</a>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+                <label>Bearer Token</label>
+                <input type="password" id="twitterBearerToken" placeholder="输入Twitter API Bearer Token" 
+                       value="AAAAAAAAAAAAAAAAAAAAALOQ8AEAAAAA6F5%2BMoD%2FeqXR2DLFsz7gLAYQpYc%3DHtjtzfpcGdB6nY8VK4RwaUbs5SVD9CAtcIHYVfan5PipduOaUC">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>状态</label>
+                <select id="twitterApiStatus">
+                    <option value="active">已激活</option>
+                    <option value="limited" selected>受限（免费层级）</option>
+                    <option value="inactive">未配置</option>
+                </select>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button class="btn btn-secondary" onclick="testTwitterApi()">
+                <i class="bi bi-lightning"></i> 测试连接
+            </button>
+            <button class="btn btn-primary" onclick="saveTwitterConfig()">
+                <i class="bi bi-check-lg"></i> 保存配置
+            </button>
+        </div>
+        
+        <div id="twitterApiResult" style="display: none; padding: 10px; border-radius: 6px; font-size: 12px;"></div>
+    </div>
+
+    <!-- 推特观察人配置 -->
+    <div class="config-section">
+        <h2><i class="bi bi-people"></i> 推特观察人配置</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+            配置需要监控的推特账号，系统将每小时自动获取这些账号的推文并进行AI情绪分析
+        </p>
+        <div style="padding: 12px; background: rgba(255,215,0,0.05); border-left: 3px solid var(--primary-color); border-radius: 0 6px 6px 0; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary);">
+            <i class="bi bi-info-circle" style="color: var(--primary-color); margin-right: 6px;"></i>
+            推特情绪分析复用上方「新闻分析AI配置」中的AI进行多投票决策
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <button class="btn btn-primary" onclick="openAddTwitterModal()">
+                <i class="bi bi-plus-lg"></i> 添加观察人
+            </button>
+            <button class="btn btn-secondary" onclick="initDefaultTwitterWatchlist()">
+                <i class="bi bi-arrow-clockwise"></i> 初始化默认列表
+            </button>
+            <button class="btn btn-success" onclick="fetchTwitterNow()">
+                <i class="bi bi-cloud-download"></i> 立即获取推文
+            </button>
+        </div>
+        
+        <table class="ai-config-table" id="twitterWatchlistTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>显示名</th>
+                    <th>分类</th>
+                    <th>优先级</th>
+                    <th>状态</th>
+                    <th>上次获取</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 动态生成 -->
+            </tbody>
+        </table>
+        
+        <div class="empty-state" id="twitterEmptyState" style="display: none;">
+            <i class="bi bi-twitter" style="font-size: 3rem;"></i>
+            <p>暂无观察人配置</p>
+            <button class="btn btn-primary" onclick="initDefaultTwitterWatchlist()">
+                <i class="bi bi-arrow-clockwise"></i> 初始化默认列表
+            </button>
+        </div>
+    </div>
+
     <!-- 系统参数配置 -->
     <div class="config-section">
-        <h2><i class="ti ti-adjustments"></i> 系统参数</h2>
+        <h2><i class="bi bi-sliders"></i> 系统参数</h2>
         <div class="form-row">
             <div class="form-group">
                 <label>最小置信度阈值</label>
@@ -365,8 +482,59 @@
             </div>
         </div>
         <button class="btn btn-primary" onclick="saveSystemConfig()">
-            <i class="ti ti-check"></i> 保存设置
+            <i class="bi bi-check-lg"></i> 保存设置
         </button>
+    </div>
+</div>
+
+<!-- 添加/编辑推特观察人模态框 -->
+<div class="modal" id="twitterWatchlistModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="twitterModalTitle">添加观察人</h3>
+            <button class="modal-close" onclick="closeTwitterModal()">&times;</button>
+        </div>
+        <form id="twitterWatchlistForm">
+            <input type="hidden" id="twitterId">
+            <div class="form-group">
+                <label>用户名（不含@）</label>
+                <input type="text" id="twitterUsername" placeholder="如: cz_binance" required>
+            </div>
+            <div class="form-group">
+                <label>显示名称</label>
+                <input type="text" id="twitterDisplayName" placeholder="如: CZ Binance">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>分类</label>
+                    <select id="twitterCategory">
+                        <option value="trader">交易员</option>
+                        <option value="influencer">KOL</option>
+                        <option value="official">官方</option>
+                        <option value="analyst">分析师</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>优先级</label>
+                    <input type="number" id="twitterPriority" value="1" min="1" max="10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>简介</label>
+                <textarea id="twitterDescription" rows="2" placeholder="可选的简介信息"></textarea>
+            </div>
+            <div class="form-group">
+                <label>状态</label>
+                <select id="twitterIsActive">
+                    <option value="1">活跃</option>
+                    <option value="0">停用</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeTwitterModal()">取消</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -439,7 +607,7 @@
             </div>
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
             </div>
         </form>
     </div>
@@ -479,10 +647,10 @@ function loadAiConfigs() {
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-secondary btn-sm" onclick="editConfig(${config.id})">
-                                <i class="ti ti-edit"></i>
+                                <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteConfig(${config.id})">
-                                <i class="ti ti-trash"></i>
+                                <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </td>
@@ -597,7 +765,7 @@ function initDefaultConfig() {
 function triggerNewsAnalysis() {
     const btn = document.querySelector('.config-section button');
     btn.disabled = true;
-    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> 分析中...';
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 分析中...';
     
     fetch('/api/news/analyze', {
         method: 'POST',
@@ -607,12 +775,12 @@ function triggerNewsAnalysis() {
     .then(res => res.json())
     .then(result => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="ti ti-analyze"></i> 分析最近新闻';
+        btn.innerHTML = '<i class="bi bi-search"></i> 分析最近新闻';
         
         if (result.success) {
             document.getElementById('analysisResult').innerHTML = `
                 <div style="padding: 12px; background: rgba(0, 208, 132, 0.1); border-radius: 6px; margin-top: 12px;">
-                    <i class="ti ti-check" style="color: #00d084;"></i> ${result.message}
+                    <i class="bi bi-check-lg" style="color: #00d084;"></i> ${result.message}
                 </div>
             `;
         }
@@ -648,9 +816,256 @@ function saveSystemConfig() {
     alert('系统参数已保存！');
 }
 
+// ==================== Twitter API 配置 ====================
+
+// 加载额度状态
+function loadTwitterQuota() {
+    fetch('/api/twitter/quota')
+        .then(res => res.json())
+        .then(data => {
+            // 更新当前额度
+            const currentValue = document.getElementById('currentQuotaValue');
+            const currentSub = document.getElementById('currentQuotaSub');
+            const currentCard = document.getElementById('currentQuotaCard');
+            
+            if (data.current_status === 'active') {
+                currentValue.textContent = '充足';
+                currentValue.style.color = '#00d084';
+                currentSub.textContent = '使用真实数据';
+                currentSub.style.color = '#00d084';
+                currentCard.style.background = 'rgba(0, 208, 132, 0.1)';
+                currentCard.style.borderColor = 'rgba(0, 208, 132, 0.3)';
+            } else {
+                currentValue.textContent = '已用完';
+                currentValue.style.color = '#ef4444';
+                currentSub.textContent = '使用演示数据';
+                currentSub.style.color = '#ef4444';
+            }
+            
+            // 更新重置时间
+            document.getElementById('resetDaysValue').textContent = data.days_until_reset + '天';
+            document.getElementById('resetDateValue').textContent = data.next_reset_date;
+        })
+        .catch(err => {
+            console.error('加载额度状态失败:', err);
+        });
+}
+
+function testTwitterApi() {
+    const resultDiv = document.getElementById('twitterApiResult');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 正在测试Twitter API连接...';
+    resultDiv.style.background = 'rgba(255,215,0,0.1)';
+    
+    fetch('/api/twitter/test', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.innerHTML = `<i class="bi bi-check-circle"></i> ${data.message}`;
+                resultDiv.style.background = 'rgba(0,208,132,0.1)';
+                resultDiv.style.color = '#00d084';
+            } else {
+                resultDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${data.message}`;
+                resultDiv.style.background = 'rgba(239,68,68,0.1)';
+                resultDiv.style.color = '#ef4444';
+            }
+            // 刷新额度显示
+            loadTwitterQuota();
+        })
+        .catch(err => {
+            resultDiv.innerHTML = `<i class="bi bi-x-circle"></i> 测试失败: ${err.message}`;
+            resultDiv.style.background = 'rgba(239,68,68,0.1)';
+            resultDiv.style.color = '#ef4444';
+        });
+}
+
+function saveTwitterConfig() {
+    const token = document.getElementById('twitterBearerToken').value;
+    const status = document.getElementById('twitterApiStatus').value;
+    
+    fetch('/api/twitter/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bearer_token: token, status: status })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Twitter API配置已保存！');
+        } else {
+            alert('保存失败: ' + (data.error || '未知错误'));
+        }
+    });
+}
+
+// ==================== 推特观察人管理 ====================
+
+// 加载推特观察人列表
+function loadTwitterWatchlist() {
+    fetch('/api/twitter/watchlist')
+        .then(res => res.json())
+        .then(items => {
+            const tbody = document.querySelector('#twitterWatchlistTable tbody');
+            const emptyState = document.getElementById('twitterEmptyState');
+            
+            if (items.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td><strong>@${item.username}</strong></td>
+                    <td>${item.display_name || '-'}</td>
+                    <td>${item.category || 'trader'}</td>
+                    <td>${item.priority}</td>
+                    <td><span class="status-badge ${item.is_active ? 'active' : 'inactive'}">${item.is_active ? '活跃' : '停用'}</span></td>
+                    <td>${item.last_fetch_at ? new Date(item.last_fetch_at).toLocaleString('zh-CN', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '从未'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-sm" onclick="editTwitterItem(${item.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTwitterItem(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(err => {
+            console.error('加载推特观察人失败:', err);
+        });
+}
+
+// 打开添加观察人模态框
+function openAddTwitterModal() {
+    document.getElementById('twitterModalTitle').textContent = '添加观察人';
+    document.getElementById('twitterWatchlistForm').reset();
+    document.getElementById('twitterId').value = '';
+    document.getElementById('twitterWatchlistModal').classList.add('active');
+}
+
+// 打开编辑观察人模态框
+function editTwitterItem(id) {
+    fetch(`/api/twitter/watchlist/${id}`)
+        .then(res => res.json())
+        .then(item => {
+            document.getElementById('twitterModalTitle').textContent = '编辑观察人';
+            document.getElementById('twitterId').value = item.id;
+            document.getElementById('twitterUsername').value = item.username;
+            document.getElementById('twitterDisplayName').value = item.display_name || '';
+            document.getElementById('twitterCategory').value = item.category || 'trader';
+            document.getElementById('twitterPriority').value = item.priority || 1;
+            document.getElementById('twitterDescription').value = item.description || '';
+            document.getElementById('twitterIsActive').value = item.is_active ? '1' : '0';
+            document.getElementById('twitterWatchlistModal').classList.add('active');
+        });
+}
+
+// 关闭观察人模态框
+function closeTwitterModal() {
+    document.getElementById('twitterWatchlistModal').classList.remove('active');
+}
+
+// 保存观察人表单
+document.getElementById('twitterWatchlistForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const itemId = document.getElementById('twitterId').value;
+    const data = {
+        username: document.getElementById('twitterUsername').value.replace('@', ''),
+        display_name: document.getElementById('twitterDisplayName').value,
+        category: document.getElementById('twitterCategory').value,
+        priority: parseInt(document.getElementById('twitterPriority').value),
+        description: document.getElementById('twitterDescription').value,
+        is_active: document.getElementById('twitterIsActive').value === '1'
+    };
+    
+    const url = itemId ? `/api/twitter/watchlist/${itemId}` : '/api/twitter/watchlist';
+    const method = itemId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.success) {
+            closeTwitterModal();
+            loadTwitterWatchlist();
+            alert('保存成功！');
+        } else {
+            alert('保存失败: ' + (result.error || '未知错误'));
+        }
+    });
+});
+
+// 删除观察人
+function deleteTwitterItem(id) {
+    if (!confirm('确定要删除这个观察人吗？')) return;
+    
+    fetch(`/api/twitter/watchlist/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                loadTwitterWatchlist();
+            } else {
+                alert('删除失败！');
+            }
+        });
+}
+
+// 初始化默认观察人列表
+function initDefaultTwitterWatchlist() {
+    fetch('/api/twitter/watchlist/init_default', { method: 'POST' })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                loadTwitterWatchlist();
+                alert('默认观察人列表已初始化！');
+            }
+        });
+}
+
+// 立即获取推文
+function fetchTwitterNow() {
+    const btn = document.querySelector('.config-section button[onclick="fetchTwitterNow()"]');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 获取中...';
+    
+    fetch('/api/twitter/fetch', { method: 'POST' })
+        .then(res => res.json())
+        .then(result => {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            
+            if (result.success) {
+                alert(`获取完成！共 ${result.total_fetched} 条推文，新入库 ${result.total_new} 条`);
+                loadTwitterWatchlist();
+            } else {
+                alert('获取失败: ' + (result.error || '未知错误'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            alert('网络错误: ' + err.message);
+        });
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     loadAiConfigs();
+    loadTwitterWatchlist();
+    loadTwitterQuota();  // 加载Twitter额度状态
 });
 </script>
 {% endblock %}
