@@ -380,6 +380,153 @@ def reports():
                          win_rate=win_rate,
                          cumulative_pnl=json.dumps(cumulative_pnl))
 
+# ==================== 系统配置模块 ====================
+
+@app.route('/system_config')
+@login_required
+def system_config():
+    """系统配置页面"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    manager = AIConfigManager()
+    ai_configs = manager.get_all_configs()
+    
+    return render_template('system_config.html', ai_configs=ai_configs)
+
+@app.route('/api/ai_configs', methods=['GET'])
+@login_required
+def get_ai_configs_api():
+    """获取所有AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    manager = AIConfigManager()
+    configs = manager.get_all_configs()
+    
+    return jsonify(configs)
+
+@app.route('/api/ai_configs', methods=['POST'])
+@login_required
+def add_ai_config_api():
+    """添加AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager, AIConfig
+    
+    data = request.json
+    
+    config = AIConfig(
+        name=data.get('name'),
+        provider=data.get('provider'),
+        model=data.get('model'),
+        api_key=data.get('api_key'),
+        base_url=data.get('base_url'),
+        temperature=float(data.get('temperature', 0.7)),
+        max_tokens=int(data.get('max_tokens', 2000)),
+        timeout=int(data.get('timeout', 30)),
+        weight=float(data.get('weight', 1.0)),
+        status=data.get('status', 'active'),
+        priority=int(data.get('priority', 1)),
+        description=data.get('description', '')
+    )
+    
+    manager = AIConfigManager()
+    config_id = manager.add_ai_config(config)
+    
+    return jsonify({'success': True, 'id': config_id})
+
+@app.route('/api/ai_configs/<int:config_id>', methods=['PUT'])
+@login_required
+def update_ai_config_api(config_id):
+    """更新AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    data = request.json
+    manager = AIConfigManager()
+    
+    success = manager.update_ai_config(config_id, data)
+    
+    return jsonify({'success': success})
+
+@app.route('/api/ai_configs/<int:config_id>', methods=['DELETE'])
+@login_required
+def delete_ai_config_api(config_id):
+    """删除AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    manager = AIConfigManager()
+    success = manager.delete_ai_config(config_id)
+    
+    return jsonify({'success': success})
+
+@app.route('/api/ai_configs/init_default', methods=['POST'])
+@login_required
+def init_default_ai_config():
+    """初始化默认AI配置"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+    from ai_config_manager import AIConfigManager
+    
+    manager = AIConfigManager()
+    manager.init_default_config()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/news/analyze', methods=['POST'])
+@login_required
+def analyze_news_api():
+    """触发新闻AI分析"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/ai_models'))
+    from news_analyzer import NewsAnalyzer
+    
+    data = request.json
+    hours = data.get('hours', 24)
+    limit = data.get('limit', 50)
+    
+    analyzer = NewsAnalyzer()
+    analyzer.batch_analyze_news(hours=hours, limit=limit)
+    
+    return jsonify({'success': True, 'message': '分析任务已启动'})
+
+@app.route('/api/news/with_decision')
+@login_required
+def get_news_with_decision_api():
+    """获取带AI决策的新闻"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/ai_models'))
+    from news_analyzer import NewsAnalyzer
+    
+    hours = request.args.get('hours', type=int, default=24)
+    limit = request.args.get('limit', type=int, default=50)
+    
+    analyzer = NewsAnalyzer()
+    news_list = analyzer.get_news_with_decision(hours=hours, limit=limit)
+    
+    return jsonify(news_list)
+
+@app.route('/api/news/summary')
+@login_required
+def get_news_summary_api():
+    """获取新闻汇总"""
+    import sys
+    sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/news-sentiment-scan'))
+    from news_summary import NewsSummarizer
+    
+    hours = request.args.get('hours', type=int, default=24)
+    
+    summarizer = NewsSummarizer()
+    result = summarizer.process_and_summarize(hours=hours)
+    
+    return jsonify(result)
+
 @app.route('/api/realtime-prices')
 @login_required
 def realtime_prices_api():
@@ -551,6 +698,34 @@ def news_stats_api():
     
     conn.close()
     return jsonify(result)
+
+@app.route('/api/news/fetch', methods=['POST'])
+@login_required
+def fetch_news_api():
+    """人工触发获取新闻"""
+    try:
+        import sys
+        sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/research-layer/news-sentiment-scan'))
+        from scan import fetch_and_save_news
+        
+        # 执行获取
+        result = fetch_and_save_news(source='jin10', with_sentiment=True)
+        
+        return jsonify({
+            'success': True,
+            'message': '获取完成',
+            'fetched': result.get('fetched', 0),
+            'saved': result.get('saved', 0),
+            'duplicates': result.get('duplicates', 0),
+            'status': result.get('status', 'success'),
+            'fetch_time': result.get('fetch_time')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/crypto/btc')
 @login_required

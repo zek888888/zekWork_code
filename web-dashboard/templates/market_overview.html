@@ -670,8 +670,9 @@
                         <option value="bearish">看跌</option>
                         <option value="neutral">中性</option>
                     </select>
-                    <button class="refresh-btn" onclick="refreshNews()" style="padding: 2px 6px;">
-                        <i class="ti ti-refresh" style="font-size: 10px;"></i>
+                    <!-- 获取新闻按钮（人工触发） -->
+                    <button class="refresh-btn" onclick="fetchNewsManually()" style="padding: 4px 10px; background: var(--primary-color); color: #000;" title="立即获取最新新闻">
+                        <i class="ti ti-refresh" style="font-size: 10px;"></i> 获取
                     </button>
                 </div>
             </div>
@@ -970,17 +971,83 @@ function renderNewsList(newsList) {
     document.getElementById('newsContainer').innerHTML = `<div class="news-list">${html}</div>`;
 }
 
-// 刷新新闻
-function refreshNews() {
-    // 刷新按钮动画
-    const btn = document.querySelector('.card-header .refresh-btn i');
-    if (btn) btn.classList.add('ti-spin');
+// 人工触发获取新闻
+function fetchNewsManually() {
+    const btn = document.querySelector('.card-header .refresh-btn');
+    const icon = btn.querySelector('i');
     
-    loadNews();
+    // 按钮动画
+    icon.classList.add('ti-spin');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
     
+    // 显示提示
+    showNotification('📰 正在获取最新新闻...', 'info');
+    
+    // 调用API获取新闻
+    fetch('/api/news/fetch', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            icon.classList.remove('ti-spin');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            
+            if (data.success) {
+                const msg = `✅ 获取完成！新入库 ${data.saved || 0} 条，重复 ${data.duplicates || 0} 条`;
+                showNotification(msg, 'success');
+                // 刷新显示
+                loadNews();
+            } else {
+                showNotification('❌ 获取失败: ' + (data.error || '未知错误'), 'error');
+            }
+        })
+        .catch(err => {
+            icon.classList.remove('ti-spin');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            showNotification('❌ 网络错误: ' + err.message, 'error');
+        });
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        z-index: 9999;
+        max-width: 300px;
+        word-break: break-word;
+        transition: all 0.3s ease;
+    `;
+    
+    // 根据类型设置颜色
+    const colors = {
+        success: 'background: rgba(0, 208, 132, 0.9); color: #000;',
+        error: 'background: rgba(239, 68, 68, 0.9); color: #fff;',
+        info: 'background: rgba(59, 130, 246, 0.9); color: #fff;'
+    };
+    notif.style.cssText += colors[type] || colors.info;
+    notif.textContent = message;
+    
+    document.body.appendChild(notif);
+    
+    // 3秒后自动消失
     setTimeout(() => {
-        if (btn) btn.classList.remove('ti-spin');
-    }, 1000);
+        notif.style.opacity = '0';
+        notif.style.transform = 'translateX(100px)';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+
+// 刷新新闻（仅刷新显示，不获取新数据）
+function refreshNews() {
+    loadNews();
 }
 
 // 旧的渲染函数（兼容）

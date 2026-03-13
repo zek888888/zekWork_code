@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+
+{% block title %}系统配置 - 量化交易系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.config-header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.config-section {
+    background: var(--card-background, #1a1d29);
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.config-section h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-section h2 i {
+    color: var(--primary-color);
+}
+
+/* AI配置表格 */
+.ai-config-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.ai-config-table th,
+.ai-config-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ai-config-table th {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.ai-config-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: rgba(0, 208, 132, 0.15);
+    color: #00d084;
+}
+
+.status-badge.inactive {
+    background: rgba(100, 116, 139, 0.15);
+    color: #64748b;
+}
+
+.status-badge.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: #000;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+/* 模态框 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-background, #1a1d29);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* 统计卡片 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.stat-card h4 {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 8px 0;
+}
+
+.stat-card .value {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* 操作按钮组 */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* 标签 */
+.tag {
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 11px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="config-container">
+    <div class="config-header">
+        <h1><i class="ti ti-settings"></i> 系统配置</h1>
+        <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="ti ti-plus"></i> 添加AI配置
+        </button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>活跃AI数量</h4>
+            <div class="value" id="activeAiCount">0</div>
+        </div>
+        <div class="stat-card">
+            <h4>今日分析新闻</h4>
+            <div class="value" id="analyzedNewsCount">0</div>
+        </div>
+        <div class="stat-card">
+            <h4>AI决策准确率</h4>
+            <div class="value">--</div>
+        </div>
+    </div>
+
+    <!-- AI配置列表 -->
+    <div class="config-section">
+        <h2><i class="ti ti-brain"></i> 新闻分析AI配置</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+            配置多个AI模型进行新闻情绪分析，系统将通过多数投票决策最终标签（利好/利空/中性）
+        </p>
+        
+        <table class="ai-config-table" id="aiConfigTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>提供商</th>
+                    <th>模型</th>
+                    <th>权重</th>
+                    <th>优先级</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 动态生成 -->
+            </tbody>
+        </table>
+        
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="ti ti-robot-off"></i>
+            <p>暂无AI配置</p>
+            <button class="btn btn-primary" onclick="initDefaultConfig()">
+                <i class="ti ti-refresh"></i> 初始化默认配置 (Kimi K2.5)
+            </button>
+        </div>
+    </div>
+
+    <!-- 新闻分析控制 -->
+    <div class="config-section">
+        <h2><i class="ti ti-news"></i> 新闻分析控制</h2>
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <button class="btn btn-primary" onclick="triggerNewsAnalysis()">
+                <i class="ti ti-analyze"></i> 分析最近新闻
+            </button>
+            <button class="btn btn-secondary" onclick="loadNewsSummary()">
+                <i class="ti ti-chart-bar"></i> 查看新闻汇总
+            </button>
+        </div>
+        <div id="analysisResult"></div>
+    </div>
+
+    <!-- 系统参数配置 -->
+    <div class="config-section">
+        <h2><i class="ti ti-adjustments"></i> 系统参数</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>最小置信度阈值</label>
+                <input type="number" id="minConfidence" value="0.6" min="0" max="1" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>AI分析开关</label>
+                <select id="aiAnalysisEnabled">
+                    <option value="true">启用</option>
+                    <option value="false">禁用</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSystemConfig()">
+            <i class="ti ti-check"></i> 保存设置
+        </button>
+    </div>
+</div>
+
+<!-- 添加/编辑AI配置模态框 -->
+<div class="modal" id="aiConfigModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">添加AI配置</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="aiConfigForm">
+            <input type="hidden" id="configId">
+            <div class="form-group">
+                <label>显示名称</label>
+                <input type="text" id="configName" placeholder="如: Kimi K2.5" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>提供商</label>
+                    <select id="configProvider">
+                        <option value="moonshot">Moonshot (Kimi)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>模型名称</label>
+                    <input type="text" id="configModel" placeholder="如: kimi-k2.5" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>API密钥</label>
+                <input type="password" id="configApiKey" placeholder="输入API密钥">
+            </div>
+            <div class="form-group">
+                <label>API基础URL (可选)</label>
+                <input type="text" id="configBaseUrl" placeholder="https://api.moonshot.cn/v1">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>温度 (0-1)</label>
+                    <input type="number" id="configTemperature" value="0.7" min="0" max="1" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>最大Tokens</label>
+                    <input type="number" id="configMaxTokens" value="2000" min="100" max="8000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>权重</label>
+                    <input type="number" id="configWeight" value="1.0" min="0" max="5" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>优先级</label>
+                    <input type="number" id="configPriority" value="1" min="1" max="10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>状态</label>
+                <select id="configStatus">
+                    <option value="active">活跃</option>
+                    <option value="inactive">停用</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>描述</label>
+                <textarea id="configDescription" rows="2" placeholder="可选的描述信息"></textarea>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 加载AI配置列表
+function loadAiConfigs() {
+    fetch('/api/ai_configs')
+        .then(res => res.json())
+        .then(configs => {
+            const tbody = document.querySelector('#aiConfigTable tbody');
+            const emptyState = document.getElementById('emptyState');
+            const activeCount = configs.filter(c => c.status === 'active').length;
+            
+            document.getElementById('activeAiCount').textContent = activeCount;
+            
+            if (configs.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = configs.map(config => `
+                <tr>
+                    <td>${config.id}</td>
+                    <td><strong>${config.name}</strong></td>
+                    <td>${config.provider}</td>
+                    <td><span class="tag">${config.model}</span></td>
+                    <td>${config.weight}</td>
+                    <td>${config.priority}</td>
+                    <td><span class="status-badge ${config.status}">${config.status === 'active' ? '活跃' : '停用'}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-sm" onclick="editConfig(${config.id})">
+                                <i class="ti ti-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteConfig(${config.id})">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(err => {
+            console.error('加载配置失败:', err);
+        });
+}
+
+// 打开添加模态框
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = '添加AI配置';
+    document.getElementById('aiConfigForm').reset();
+    document.getElementById('configId').value = '';
+    document.getElementById('aiConfigModal').classList.add('active');
+}
+
+// 打开编辑模态框
+function editConfig(id) {
+    fetch(`/api/ai_configs/${id}`)
+        .then(res => res.json())
+        .then(config => {
+            document.getElementById('modalTitle').textContent = '编辑AI配置';
+            document.getElementById('configId').value = config.id;
+            document.getElementById('configName').value = config.name;
+            document.getElementById('configProvider').value = config.provider;
+            document.getElementById('configModel').value = config.model;
+            document.getElementById('configTemperature').value = config.temperature;
+            document.getElementById('configMaxTokens').value = config.max_tokens;
+            document.getElementById('configWeight').value = config.weight;
+            document.getElementById('configPriority').value = config.priority;
+            document.getElementById('configStatus').value = config.status;
+            document.getElementById('configDescription').value = config.description || '';
+            document.getElementById('aiConfigModal').classList.add('active');
+        });
+}
+
+// 关闭模态框
+function closeModal() {
+    document.getElementById('aiConfigModal').classList.remove('active');
+}
+
+// 保存配置
+document.getElementById('aiConfigForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const configId = document.getElementById('configId').value;
+    const data = {
+        name: document.getElementById('configName').value,
+        provider: document.getElementById('configProvider').value,
+        model: document.getElementById('configModel').value,
+        api_key: document.getElementById('configApiKey').value,
+        base_url: document.getElementById('configBaseUrl').value,
+        temperature: parseFloat(document.getElementById('configTemperature').value),
+        max_tokens: parseInt(document.getElementById('configMaxTokens').value),
+        weight: parseFloat(document.getElementById('configWeight').value),
+        priority: parseInt(document.getElementById('configPriority').value),
+        status: document.getElementById('configStatus').value,
+        description: document.getElementById('configDescription').value
+    };
+    
+    const url = configId ? `/api/ai_configs/${configId}` : '/api/ai_configs';
+    const method = configId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.success) {
+            closeModal();
+            loadAiConfigs();
+            alert('保存成功！');
+        } else {
+            alert('保存失败！');
+        }
+    });
+});
+
+// 删除配置
+function deleteConfig(id) {
+    if (!confirm('确定要删除这个AI配置吗？')) return;
+    
+    fetch(`/api/ai_configs/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                loadAiConfigs();
+            } else {
+                alert('删除失败！');
+            }
+        });
+}
+
+// 初始化默认配置
+function initDefaultConfig() {
+    fetch('/api/ai_configs/init_default', { method: 'POST' })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                loadAiConfigs();
+                alert('默认配置已初始化！');
+            }
+        });
+}
+
+// 触发新闻分析
+function triggerNewsAnalysis() {
+    const btn = document.querySelector('.config-section button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> 分析中...';
+    
+    fetch('/api/news/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hours: 24, limit: 50 })
+    })
+    .then(res => res.json())
+    .then(result => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-analyze"></i> 分析最近新闻';
+        
+        if (result.success) {
+            document.getElementById('analysisResult').innerHTML = `
+                <div style="padding: 12px; background: rgba(0, 208, 132, 0.1); border-radius: 6px; margin-top: 12px;">
+                    <i class="ti ti-check" style="color: #00d084;"></i> ${result.message}
+                </div>
+            `;
+        }
+    });
+}
+
+// 加载新闻汇总
+function loadNewsSummary() {
+    fetch('/api/news/summary?hours=24')
+        .then(res => res.json())
+        .then(data => {
+            let html = '<div style="margin-top: 16px;">';
+            html += `<p>去重前: ${data.total_raw}条 | 去重后: ${data.total_unique}条 | 去重率: ${(data.deduplication_rate*100).toFixed(1)}%</p>`;
+            
+            if (data.summaries) {
+                Object.entries(data.summaries).forEach(([cat, summary]) => {
+                    if (summary.count > 0 && cat !== '全部') {
+                        html += `<div style="margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px;">`;
+                        html += `<strong>${cat}</strong>: ${summary.count}条 `;
+                        html += `🟢${summary.sentiment.bullish} 🔴${summary.sentiment.bearish} ⚪${summary.sentiment.neutral}`;
+                        html += `</div>`;
+                    }
+                });
+            }
+            html += '</div>';
+            
+            document.getElementById('analysisResult').innerHTML = html;
+        });
+}
+
+// 保存系统配置
+function saveSystemConfig() {
+    alert('系统参数已保存！');
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadAiConfigs();
+});
+</script>
+{% endblock %}
