@@ -1,0 +1,83 @@
+# 量化交易系统 .gitignore
+
+# 数据文件 (敏感信息和大数据)
+data/*.db
+data/*.db-journal
+data/*.sqlite
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件
+*.log
+logs/
+logs/*
+
+# 环境变量和密钥
+.env
+.env.local
+.env.production
+.env.*
+*.pem
+*.key
+config.yaml
+secrets.json
+
+# Python缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 测试结果和报告
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+*.cover
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 回测结果图片 (可选，大文件)
+backtest_results/*.png
+backtest_results/*.jpg
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 其他
+*.bak
+*.backup
