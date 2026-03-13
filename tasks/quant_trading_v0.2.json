@@ -1,0 +1,83 @@
+{
+  "project": "量化交易系统",
+  "description": "开发完整的量化交易系统，包含数据层、研究层、决策层、执行层",
+  "version": "v0.2.0",
+  "deadline": "2026-03-18",
+  "tasks": [
+    {
+      "agent": "code",
+      "task": "开发gmgn.ai冲狗数据抓取模块 - 实现新币监控、聪明钱包追踪、热度分析功能",
+      "priority": "high",
+      "module": "data-layer/gmgn-fetch",
+      "deliverables": [
+        "gmgn_fetch.py - 数据抓取脚本",
+        "SKILL.md - 技能文档",
+        "支持新币列表获取",
+        "支持聪明钱包地址追踪",
+        "支持热度指标计算"
+      ]
+    },
+    {
+      "agent": "code", 
+      "task": "开发Twitter KOL监控模块 - 实现KOL推文抓取、情绪分析、信号提取",
+      "priority": "high",
+      "module": "research-layer/twitter-kol-monitor",
+      "deliverables": [
+        "twitter_monitor.py - 监控脚本",
+        "SKILL.md - 技能文档",
+        "支持指定KOL列表监控",
+        "推文情绪分析",
+        "交易信号提取"
+      ]
+    },
+    {
+      "agent": "code",
+      "task": "开发交易执行器模块 - 接入币安API，实现模拟交易和真实交易",
+      "priority": "high",
+      "module": "execution-layer/trade-executor",
+      "deliverables": [
+        "trade_executor.py - 交易执行脚本",
+        "SKILL.md - 技能文档",
+        "支持模拟交易",
+        "支持真实交易(币安API)",
+        "支持订单管理"
+      ]
+    },
+    {
+      "agent": "test",
+      "task": "为quant-trading系统编写测试用例 - 测试market-data-fetch、factor-score-engine、news-sentiment-scan模块",
+      "priority": "medium",
+      "module": "tests/",
+      "deliverables": [
+        "test_market_data.py - 数据层测试",
+        "test_factor_score.py - 因子评分测试",
+        "test_news_scan.py - 新闻扫描测试",
+        "pytest.ini - 测试配置"
+      ]
+    },
+    {
+      "agent": "maintenance",
+      "task": "更新quant-trading项目文档 - 完善README、添加架构图、更新版本记录",
+      "priority": "medium",
+      "module": "docs/",
+      "deliverables": [
+        "README.md - 项目主文档",
+        "ARCHITECTURE.md - 架构设计文档",
+        "CHANGELOG.md - 版本变更记录",
+        "API.md - API接口文档"
+      ]
+    },
+    {
+      "agent": "maintenance",
+      "task": "将quant-trading代码推送到GitHub仓库",
+      "priority": "low",
+      "module": "github",
+      "deliverables": [
+        "创建GitHub仓库",
+        "推送代码",
+        "设置README",
+        "添加LICENSE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+/** ============================================
+   Tabs 标签页组件样式
+   参考 shadcn-ui Tabs 组件设计
+   ============================================ */
+
+/* 标签页容器 */
+.tabs {
+    display: flex;
+    width: 100%;
+}
+
+/* 标签列表 */
+.tabs-list {
+    display: flex;
+    gap: 4px;
+    background-color: var(--tag-background, rgba(255, 255, 255, 0.03));
+    border-radius: var(--radius-lg, 12px);
+    padding: 4px;
+}
+
+/* 标签触发器 */
+.tabs-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-muted, #64748b);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    white-space: nowrap;
+}
+
+.tabs-trigger:hover {
+    color: var(--text-secondary, #94a3b8);
+}
+
+.tabs-trigger:focus-visible {
+    outline: 2px solid var(--primary-color, #00d084);
+    outline-offset: 2px;
+}
+
+.tabs-trigger.active {
+    background-color: var(--card-background, #1e2230);
+    color: var(--text-primary, #f1f5f9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.tabs-trigger.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 关闭按钮 */
+.tabs-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-muted, #64748b);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabs-close:hover {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #f1f5f9);
+}
+
+/* 标签面板容器 */
+.tabs-panels {
+    flex: 1;
+    margin-top: 16px;
+}
+
+/* 标签面板 */
+.tabs-panel {
+    display: none;
+    animation: tab-panel-enter 0.2s ease;
+}
+
+.tabs-panel:not([hidden]) {
+    display: block;
+}
+
+/* 标签页布局变体 */
+
+/* 顶部标签（默认） */
+.tabs-top {
+    flex-direction: column;
+}
+
+.tabs-top .tabs-list {
+    align-self: flex-start;
+}
+
+/* 底部标签 */
+.tabs-bottom {
+    flex-direction: column;
+}
+
+.tabs-bottom .tabs-list {
+    align-self: flex-start;
+    order: 2;
+    margin-top: 16px;
+}
+
+.tabs-bottom .tabs-panels {
+    order: 1;
+    margin-top: 0;
+}
+
+/* 左侧标签 */
+.tabs-left {
+    flex-direction: row;
+    gap: 16px;
+}
+
+.tabs-left .tabs-list {
+    flex-direction: column;
+    align-self: flex-start;
+}
+
+.tabs-left .tabs-panels {
+    margin-top: 0;
+}
+
+/* 右侧标签 */
+.tabs-right {
+    flex-direction: row-reverse;
+    gap: 16px;
+}
+
+.tabs-right .tabs-list {
+    flex-direction: column;
+    align-self: flex-start;
+}
+
+.tabs-right .tabs-panels {
+    margin-top: 0;
+}
+
+/* 标签样式变体 */
+
+/* 胶囊样式 */
+.tabs-pills .tabs-list {
+    background: transparent;
+    padding: 0;
+    gap: 8px;
+}
+
+.tabs-pills .tabs-trigger {
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: 9999px;
+}
+
+.tabs-pills .tabs-trigger.active {
+    background-color: var(--primary-color, #00d084);
+    border-color: var(--primary-color, #00d084);
+    color: #000;
+}
+
+/* 按钮样式 */
+.tabs-buttons .tabs-list {
+    background: transparent;
+    padding: 0;
+    gap: 8px;
+}
+
+.tabs-buttons .tabs-trigger {
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: var(--radius-md, 8px);
+}
+
+.tabs-buttons .tabs-trigger.active {
+    background-color: var(--card-background, #1e2230);
+    border-color: var(--primary-color, #00d084);
+    color: var(--primary-color, #00d084);
+}
+
+/* 线条样式 */
+.tabs-line .tabs-list {
+    background: transparent;
+    border-bottom: 2px solid var(--border-color, #2d3142);
+    border-radius: 0;
+    padding: 0;
+    gap: 0;
+}
+
+.tabs-line .tabs-trigger {
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tabs-line .tabs-trigger.active {
+    background: transparent;
+    box-shadow: none;
+    border-bottom-color: var(--primary-color, #00d084);
+    color: var(--primary-color, #00d084);
+}
+
+/* 动画 */
+@keyframes tab-panel-enter {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .tabs-left,
+    .tabs-right {
+        flex-direction: column;
+    }
+    
+    .tabs-left .tabs-list,
+    .tabs-right .tabs-list {
+        flex-direction: row;
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    .tabs-left .tabs-panels,
+    .tabs-right .tabs-panels {
+        margin-top: 16px;
+    }
+}

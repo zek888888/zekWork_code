@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}交易执行 - 量化交易系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2><i class="bi bi-currency-exchange"></i> 交易执行</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 交易表单 -->
+    <div class="col-lg-5 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle"></i> 新建订单
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('trade') }}">
+                    <!-- 买卖方向 -->
+                    <div class="mb-4">
+                        <label class="form-label">交易方向</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="action" id="action_buy" value="buy" 
+                                   {% if request.args.get('action') == 'buy' %}checked{% endif %} required>
+                            <label class="btn btn-outline-success btn-lg" for="action_buy">
+                                <i class="bi bi-arrow-up-circle"></i> 买入
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="action" id="action_sell" value="sell"
+                                   {% if request.args.get('action') == 'sell' %}checked{% endif %}>
+                            <label class="btn btn-outline-danger btn-lg" for="action_sell">
+                                <i class="bi bi-arrow-down-circle"></i> 卖出
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 标的代码 -->
+                    <div class="mb-3">
+                        <label for="symbol" class="form-label">标的代码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                            <input type="text" class="form-control" id="symbol" name="symbol" 
+                                   placeholder="例如: 000001.SZ" required
+                                   value="{{ request.args.get('symbol', '') }}">
+                        </div>
+                    </div>
+                    
+                    <!-- 订单类型 -->
+                    <div class="mb-3">
+                        <label class="form-label">订单类型</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="order_type" id="type_market" value="market" checked onchange="togglePriceField()">
+                            <label class="form-check-label" for="type_market">
+                                <i class="bi bi-lightning"></i> 市价单
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="order_type" id="type_limit" value="limit" onchange="togglePriceField()">
+                            <label class="form-check-label" for="type_limit">
+                                <i class="bi bi-sliders"></i> 限价单
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 价格 -->
+                    <div class="mb-3" id="priceField" style="display: none;">
+                        <label for="price" class="form-label">委托价格</label>
+                        <div class="input-group">
+                            <span class="input-group-text">¥</span>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <!-- 数量 -->
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">交易数量</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-stack"></i></span>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   min="1" placeholder="100" required>
+                        </div>
+                    </div>
+                    
+                    <!-- 止损止盈 -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="stop_loss" class="form-label">
+                                <i class="bi bi-shield-minus text-danger"></i> 止损价
+                            </label>
+                            <input type="number" class="form-control" id="stop_loss" name="stop_loss" 
+                                   step="0.01" placeholder="可选">
+                        </div>
+                        <div class="col-6">
+                            <label for="take_profit" class="form-label">
+                                <i class="bi bi-shield-plus text-success"></i> 止盈价
+                            </label>
+                            <input type="number" class="form-control" id="take_profit" name="take_profit" 
+                                   step="0.01" placeholder="可选">
+                        </div>
+                    </div>
+                    
+                    <!-- 预估金额 -->
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between">
+                            <span>预估金额:</span>
+                            <strong id="estimatedAmount">¥0.00</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-check-circle"></i> 提交订单
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近订单 -->
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> 最近订单</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>时间</th>
+                                <th>标的</th>
+                                <th>方向</th>
+                                <th>类型</th>
+                                <th class="text-end">数量</th>
+                                <th class="text-end">价格</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if orders %}
+                                {% for order in orders %}
+                                <tr>
+                                    <td><small>{{ order.created_at }}</small></td>
+                                    <td><strong>{{ order.symbol }}</strong></td>
+                                    <td>
+                                        {% if order.action == 'buy' %}
+                                            <span class="badge bg-success">买入</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">卖出</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if order.order_type == 'market' %}
+                                            <span class="badge bg-info">市价</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">限价</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">{{ "{:,.0f}".format(order.quantity) }}</td>
+                                    <td class="text-end">
+                                        {% if order.price %}
+                                            ¥{{ "{:.2f}".format(order.price) }}
+                                        {% else %}
+                                            <span class="text-muted">市价</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if order.status == 'filled' %}
+                                            <span class="badge bg-success">已成交</span>
+                                        {% elif order.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">待成交</span>
+                                        {% elif order.status == 'cancelled' %}
+                                            <span class="badge bg-secondary">已取消</span>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ order.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <p class="mt-3">暂无订单记录</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 快速交易提示 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> 交易提示
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-clock"></i> 交易时间</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>早盘: 09:30 - 11:30</li>
+                            <li>午盘: 13:00 - 15:00</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-exclamation-triangle"></i> 风险提示</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>• 市价单按当前最优价格成交</li>
+                            <li>• 限价单可能无法立即成交</li>
+                            <li>• 请设置合理的止损止盈</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 切换价格字段显示
+function togglePriceField() {
+    const isLimit = document.getElementById('type_limit').checked;
+    const priceField = document.getElementById('priceField');
+    const priceInput = document.getElementById('price');
+    
+    if (isLimit) {
+        priceField.style.display = 'block';
+        priceInput.setAttribute('required', 'required');
+    } else {
+        priceField.style.display = 'none';
+        priceInput.removeAttribute('required');
+    }
+    
+    calculateEstimatedAmount();
+}
+
+// 计算预估金额
+function calculateEstimatedAmount() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const isLimit = document.getElementById('type_limit').checked;
+    let price = 0;
+    
+    if (isLimit) {
+        price = parseFloat(document.getElementById('price').value) || 0;
+    } else {
+        // 市价单使用模拟价格
+        price = 100; // 实际应从API获取当前价格
+    }
+    
+    const amount = quantity * price;
+    document.getElementById('estimatedAmount').textContent = '¥' + amount.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// 监听输入变化
+document.getElementById('quantity').addEventListener('input', calculateEstimatedAmount);
+document.getElementById('price').addEventListener('input', calculateEstimatedAmount);
+document.querySelectorAll('input[name="order_type"]').forEach(radio => {
+    radio.addEventListener('change', calculateEstimatedAmount);
+});
+
+// 初始化
+window.addEventListener('load', function() {
+    togglePriceField();
+});
+</script>
+{% endblock %}

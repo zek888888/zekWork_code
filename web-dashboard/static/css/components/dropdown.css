@@ -1,0 +1,195 @@
+/** ============================================
+   Dropdown 下拉菜单组件样式
+   参考 shadcn-ui DropdownMenu 组件设计
+   ============================================ */
+
+/* 下拉菜单容器 */
+.dropdown-menu {
+    position: absolute;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 320px;
+    background-color: var(--card-background, #1e2230);
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.5), 
+                0 10px 20px -15px rgba(0, 0, 0, 0.3);
+    padding: 6px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.96);
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    pointer-events: none;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* 下拉菜单项 */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 14px;
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    outline: none;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #f1f5f9);
+}
+
+.dropdown-item:focus-visible {
+    outline: 2px solid var(--primary-color, #00d084);
+    outline-offset: -2px;
+}
+
+.dropdown-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 菜单项图标 */
+.dropdown-item .ti {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--text-muted, #64748b);
+    flex-shrink: 0;
+}
+
+.dropdown-item:hover .ti {
+    color: var(--text-secondary, #94a3b8);
+}
+
+/* 菜单项标签 */
+.dropdown-item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 快捷键 */
+.dropdown-shortcut {
+    margin-left: auto;
+    padding: 2px 8px;
+    background-color: var(--tag-background, rgba(255, 255, 255, 0.05));
+    border-radius: var(--radius-sm, 6px);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.5px;
+}
+
+/* 分隔线 */
+.dropdown-divider {
+    height: 1px;
+    margin: 6px 0;
+    background-color: var(--border-color, #2d3142);
+}
+
+/* 分组标题 */
+.dropdown-header {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 下拉触发按钮 */
+.dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: var(--card-background, #1e2230);
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dropdown-trigger:hover {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.05));
+}
+
+.dropdown-trigger:focus {
+    outline: none;
+    border-color: var(--primary-color, #00d084);
+    box-shadow: 0 0 0 2px rgba(0, 208, 132, 0.2);
+}
+
+.dropdown-trigger[aria-expanded="true"] {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.05));
+}
+
+/* 下拉箭头 */
+.dropdown-trigger .ti-chevron-down {
+    transition: transform 0.2s ease;
+}
+
+.dropdown-trigger[aria-expanded="true"] .ti-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* 子菜单 */
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    left: 100%;
+    top: -6px;
+    margin-left: 4px;
+}
+
+.dropdown-submenu > .dropdown-item::after {
+    content: '';
+    margin-left: auto;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 4px solid var(--text-muted, #64748b);
+}
+
+/* 动画 */
+@keyframes dropdown-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+    .dropdown-menu {
+        max-width: calc(100vw - 32px);
+    }
+}

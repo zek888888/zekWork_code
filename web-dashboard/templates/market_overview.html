@@ -1,0 +1,776 @@
+{% extends "base.html" %}
+
+{% block title %}市场信息总览 - 量化交易系统{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/card.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/badge.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/button.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/tabs.css') }}">
+<style>
+.market-overview {
+    padding: 12px;
+    font-size: 12px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.section-title h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-title .icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.section-title.news .icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.section-title.crypto .icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.section-title.sector .icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.section-title.meme .icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.section-title.wallet .icon { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+
+/* 紧凑卡片 */
+.card {
+    margin-bottom: 10px;
+}
+
+.card-header {
+    padding: 8px 12px;
+}
+
+.card-body {
+    padding: 10px;
+}
+
+/* 新闻卡片 */
+.news-card {
+    border-left: 2px solid var(--border-color);
+    transition: all 0.2s ease;
+    padding: 8px;
+    margin-bottom: 6px;
+}
+
+.news-card:hover {
+    border-left-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.news-card.positive { border-left-color: #00d084; }
+.news-card.negative { border-left-color: #ef4444; }
+.news-card.neutral { border-left-color: #64748b; }
+
+.news-title {
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.news-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.news-source {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.news-sentiment {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.news-keywords {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.news-keywords .badge {
+    font-size: 9px;
+    padding: 2px 6px;
+}
+
+/* 币种卡片 */
+.token-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+}
+
+.token-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.token-rank {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--tag-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 10px;
+}
+
+.token-rank.top3 {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #000;
+}
+
+.token-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--tag-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.token-info {
+    flex: 1;
+}
+
+.token-name {
+    font-weight: 600;
+    font-size: 11px;
+    margin-bottom: 0;
+}
+
+.token-symbol {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.token-price {
+    text-align: right;
+}
+
+.token-price-value {
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.token-price-change {
+    font-size: 10px;
+}
+
+/* 板块卡片 */
+.sector-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid var(--border-color);
+}
+
+.sector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sector-name {
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.sector-change {
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.sector-leaders {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.leader-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+.leader-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.leader-rank {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--tag-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.leader-name {
+    font-weight: 500;
+    font-size: 10px;
+}
+
+.leader-code {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.leader-change {
+    font-size: 10px;
+}
+
+/* 聪明钱包 */
+.wallet-form {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.wallet-form input {
+    flex: 1;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 11px;
+}
+
+.wallet-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.wallet-form input::placeholder {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.wallet-form button {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.wallet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wallet-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.wallet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.wallet-address {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.wallet-total {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 11px;
+}
+
+.wallet-holdings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.holding-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.holding-item:last-child {
+    border-bottom: none;
+}
+
+.holding-token {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+}
+
+.holding-amount {
+    text-align: right;
+    font-size: 10px;
+}
+
+.holding-amount small {
+    font-size: 9px;
+}
+
+/* 刷新按钮 */
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-color);
+}
+
+.refresh-btn.spinning i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 图表容器 */
+.chart-container {
+    height: 180px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+/* 时间周期选择器 */
+.time-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.time-btn {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-btn:hover,
+.time-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #000;
+}
+
+/* 页面标题 */
+.page-header {
+    margin-bottom: 12px;
+}
+
+.page-header h1 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.last-update {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* BTC价格显示 */
+.btc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.btc-price-main {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.btc-label {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.btc-change-badge {
+    font-size: 11px;
+}
+
+/* 网格布局 - 一页展示 */
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 0.9fr;
+    gap: 10px;
+}
+
+.overview-grid .column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+    .overview-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .overview-grid .column:last-child {
+        grid-column: 1 / -1;
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 768px) {
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+    .overview-grid .column:last-child {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="market-overview">
+    <!-- 页面标题 -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div class="section-title">
+            <div class="icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="ti ti-dashboard"></i>
+            </div>
+            <h1>市场信息总览</h1>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="last-update" id="lastUpdate">最后更新: --:--:--</span>
+            <button class="refresh-btn" onclick="refreshAllData()">
+                <i class="ti ti-refresh"></i> 刷新
+            </button>
+        </div>
+    </div>
+
+    <div class="overview-grid">
+        <!-- 左侧列：新闻 + 土狗 -->
+        <div class="column">
+            <!-- 新闻聚焦 -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="section-title news mb-0">
+                        <div class="icon"><i class="ti ti-news"></i></div>
+                        <h2>新闻聚焦</h2>
+                    </div>
+                    <button class="refresh-btn" onclick="refreshNews()">
+                        <i class="ti ti-refresh"></i>
+                    </button>
+                </div>
+                <div class="card-body" id="newsContainer">
+                    <div class="text-center py-3 text-muted">
+                        <i class="ti ti-loader-2 ti-spin" style="font-size: 16px;"></i>
+                        <p class="mt-1 mb-0" style="font-size: 10px;">加载中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 热点土狗 -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="section-title meme mb-0">
+                        <div class="icon"><i class="ti ti-flame"></i></div>
+                        <h2>热点土狗</h2>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <a href="https://gmgn.ai/" target="_blank" class="refresh-btn">
+                            <i class="ti ti-external-link"></i>
+                        </a>
+                        <button class="refresh-btn" onclick="refreshMemeCoins()">
+                            <i class="ti ti-refresh"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-2" id="memeContainer">
+                    <div class="text-center py-3 text-muted">
+                        <i class="ti ti-loader-2 ti-spin" style="font-size: 16px;"></i>
+                        <p class="mt-1 mb-0" style="font-size: 10px;">加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间列：虚拟货币大盘 + 板块追踪 -->
+        <div class="column">
+            <!-- 虚拟货币大盘 -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="section-title crypto mb-0">
+                        <div class="icon"><i class="ti ti-coin-bitcoin"></i></div>
+                        <h2>虚拟货币大盘</h2>
+                    </div>
+                    <div class="time-selector">
+                        <button class="time-btn active" data-interval="15m">15分</button>
+                        <button class="time-btn" data-interval="1h">1h</button>
+                        <button class="time-btn" data-interval="4h">4h</button>
+                        <button class="time-btn" data-interval="1d">1d</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="btc-header">
+                        <div>
+                            <span class="btc-label">BTC/USDT</span>
+                            <h3 class="btc-price-main" id="btcPrice">--</h3>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge btc-change-badge" id="btcChange">--</span>
+                            <p class="btc-label mb-0 mt-1">24h涨跌</p>
+                        </div>
+                    </div>
+                    <div id="btcChart" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- 板块追踪 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="section-title sector mb-0">
+                        <div class="icon"><i class="ti ti-chart-bar"></i></div>
+                        <h2>板块追踪</h2>
+                    </div>
+                </div>
+                <div class="card-body" id="sectorContainer">
+                    <div class="text-center py-3 text-muted">
+                        <i class="ti ti-loader-2 ti-spin" style="font-size: 16px;"></i>
+                        <p class="mt-1 mb-0" style="font-size: 10px;">加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧列：聪明钱包 -->
+        <div class="column">
+            <!-- 聪明钱包持仓 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="section-title wallet mb-0">
+                        <div class="icon"><i class="ti ti-wallet"></i></div>
+                        <h2>聪明钱包持仓</h2>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="wallet-form">
+                        <input type="text" id="walletAddress" placeholder="输入钱包地址 (0x...)" maxlength="42">
+                        <button class="btn btn-primary" onclick="addWallet()">
+                            <i class="ti ti-plus"></i>
+                        </button>
+                    </div>
+                    <div id="walletContainer">
+                        <div class="text-center py-3 text-muted">
+                            <p class="mb-0" style="font-size: 11px;">暂无追踪的钱包</p>
+                            <small style="font-size: 9px;">添加钱包地址开始追踪</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+// ============ 假数据 ============
+const mockNews = [
+    { id: 1, title: '美联储暗示可能在下半年降息，市场反应积极', source: '财联社', sentiment_score: 0.65, published_at: '10分钟前', keywords: '美联储,降息,货币政策', content: '美联储最新会议纪要显示，多数官员认为通胀压力正在缓解，如果经济数据继续向好，可能在下半年开始降息。市场对此反应积极，美股三大指数集体收涨。' },
+    { id: 2, title: '比特币突破72000美元，创历史新高', source: '金色财经', sentiment_score: 0.82, published_at: '25分钟前', keywords: '比特币,加密货币,牛市', content: '比特币价格持续攀升，突破72000美元大关，创下历史新高。分析师认为，机构资金持续流入是推动价格上涨的主要原因。' },
+    { id: 3, title: '特斯拉Q1交付量不及预期，股价盘后下跌5%', source: '华尔街见闻', sentiment_score: -0.45, published_at: '1小时前', keywords: '特斯拉,财报,电动车', content: '特斯拉公布第一季度交付数据，共交付38.6万辆电动车，低于市场预期的45万辆。受此消息影响，特斯拉股价盘后下跌5%。' },
+    { id: 4, title: '英伟达发布新一代AI芯片，性能提升3倍', source: 'TechCrunch', sentiment_score: 0.78, published_at: '2小时前', keywords: '英伟达,AI芯片,人工智能', content: '英伟达在GTC大会上发布新一代AI芯片Blackwell，性能较上一代提升3倍，能效提升25倍。多家科技巨头已表示将采用该芯片。' },
+    { id: 5, title: '欧洲央行维持利率不变，符合市场预期', source: '路透社', sentiment_score: 0.12, published_at: '3小时前', keywords: '欧洲央行,利率,欧元区', content: '欧洲央行公布最新利率决议，维持主要再融资利率在4.5%不变，符合市场预期。行长拉加德表示，需要更多数据确认通胀回落趋势。' }
+];
+
+const mockMemeCoins = [
+    { id: 1, name: 'Pepe', symbol: 'PEPE', price: 0.00000852, change_24h: 15.67, change_7d: 45.23, volume: 125000000, marketCap: 3560000000, holders: 125000 },
+    { id: 2, name: 'Shiba Inu', symbol: 'SHIB', price: 0.0000285, change_24h: 5.34, change_7d: 12.56, volume: 89000000, marketCap: 16800000000, holders: 890000 },
+    { id: 3, name: 'Dogecoin', symbol: 'DOGE', price: 0.1856, change_24h: 2.12, change_7d: 8.92, volume: 1560000000, marketCap: 26500000000, holders: 4500000 },
+    { id: 4, name: 'Floki', symbol: 'FLOKI', price: 0.000235, change_24h: -3.45, change_7d: 18.76, volume: 45000000, marketCap: 2250000000, holders: 78000 },
+    { id: 5, name: 'Bonk', symbol: 'BONK', price: 0.0000289, change_24h: 8.92, change_7d: 32.15, volume: 67000000, marketCap: 1850000000, holders: 95000 },
+    { id: 6, name: 'Baby Doge', symbol: 'BABYDOGE', price: 0.00000000185, change_24h: -1.23, change_7d: 5.67, volume: 12000000, marketCap: 890000000, holders: 56000 }
+];
+
+const mockWallets = [
+    { id: 1, address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', tag: '鲸鱼', totalValue: 28475632, profit24h: 1254320, profitRate24h: 4.62, profit7d: 4521890, profitRate7d: 18.92, trades24h: 23, winRate: 78.5, holdings: [
+        { token: 'ETH', symbol: 'ETH', amount: 1250.5, value: 4521890, price: 3616.12, change24h: 2.35 },
+        { token: 'WBTC', symbol: 'WBTC', amount: 45.2, value: 3256480, price: 72046.00, change24h: -0.82 },
+        { token: 'LINK', symbol: 'LINK', amount: 125000, value: 1875000, price: 15.00, change24h: 5.67 },
+        { token: 'UNI', symbol: 'UNI', amount: 85000, value: 765000, price: 9.00, change24h: -2.14 },
+        { token: 'AAVE', symbol: 'AAVE', amount: 3200, value: 416000, price: 130.00, change24h: 1.23 }
+    ]},
+    { id: 2, address: '0x8ba1f109551bD432803012645Hac136c82C3e8C', tag: '聪明钱', totalValue: 12564780, profit24h: -234560, profitRate24h: -1.83, profit7d: 892340, profitRate7d: 7.65, trades24h: 15, winRate: 65.3, holdings: [
+        { token: 'SOL', symbol: 'SOL', amount: 45000, value: 5850000, price: 130.00, change24h: -3.45 },
+        { token: 'RAY', symbol: 'RAY', amount: 250000, value: 875000, price: 3.50, change24h: 8.92 },
+        { token: 'JUP', symbol: 'JUP', amount: 180000, value: 540000, price: 3.00, change24h: 12.34 },
+        { token: 'MNDE', symbol: 'MNDE', amount: 500000, value: 325000, price: 0.65, change24h: -5.67 }
+    ]},
+    { id: 3, address: '0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bA', tag: '机构', totalValue: 56234500, profit24h: 2345670, profitRate24h: 4.35, profit7d: 8923450, profitRate7d: 18.85, trades24h: 45, winRate: 82.1, holdings: [
+        { token: 'BTC', symbol: 'BTC', amount: 185.5, value: 13356000, price: 72000, change24h: -0.45 },
+        { token: 'ETH', symbol: 'ETH', amount: 2250, value: 8136750, price: 3616.33, change24h: 2.12 },
+        { token: 'BNB', symbol: 'BNB', amount: 15000, value: 9750000, price: 650.00, change24h: 1.85 }
+    ]}
+];
+
+const mockSectors = [
+    { id: 'tech', name: '科技板块', change: 2.35, change5d: 8.92, change1m: 15.67, volume: 125.6, marketCap: 2850, pe: 28.5, stocks: [
+        { name: '腾讯控股', code: '00700', price: 385.2, change: 1.85, volume: '2.5亿' },
+        { name: '阿里巴巴', code: '09988', price: 78.5, change: 2.45, volume: '3.2亿' },
+        { name: '美团', code: '03690', price: 125.8, change: 3.12, volume: '1.8亿' },
+        { name: '小米集团', code: '01810', price: 16.8, change: 1.56, volume: '4.5亿' },
+        { name: '京东集团', code: '09618', price: 112.5, change: -0.85, volume: '1.2亿' },
+        { name: '百度', code: '09888', price: 95.6, change: 2.18, volume: '0.9亿' },
+        { name: '网易', code: '09999', price: 158.3, change: 1.92, volume: '0.6亿' },
+        { name: '快手', code: '01024', price: 52.4, change: -1.25, volume: '1.1亿' }
+    ]},
+    { id: 'finance', name: '金融板块', change: -0.52, change5d: 1.25, change1m: 3.85, volume: 89.5, marketCap: 1680, pe: 8.2, stocks: [
+        { name: '中国平安', code: '02318', price: 42.5, change: -0.35, volume: '2.1亿' },
+        { name: '招商银行', code: '03968', price: 35.8, change: -0.68, volume: '1.5亿' },
+        { name: '工商银行', code: '01398', price: 4.25, change: -0.42, volume: '3.2亿' },
+        { name: '建设银行', code: '00939', price: 5.12, change: -0.25, volume: '2.8亿' },
+        { name: '中国银行', code: '03988', price: 3.35, change: 0.15, volume: '2.5亿' },
+        { name: '农业银行', code: '01288', price: 3.85, change: -0.18, volume: '1.9亿' },
+        { name: '中国人寿', code: '02628', price: 12.8, change: -1.25, volume: '0.8亿' },
+        { name: '香港交易所', code: '00388', price: 285.6, change: 0.85, volume: '0.3亿' }
+    ]},
+    { id: 'energy', name: '新能源', change: 3.78, change5d: 12.56, change1m: 22.35, volume: 156.8, marketCap: 980, pe: 18.5, stocks: [
+        { name: '比亚迪', code: '01211', price: 245.8, change: 4.25, volume: '1.8亿' },
+        { name: '宁德时代', code: '300750', price: 185.6, change: 3.56, volume: '2.2亿' },
+        { name: '隆基绿能', code: '601012', price: 22.5, change: 3.89, volume: '3.5亿' },
+        { name: '通威股份', code: '600438', price: 28.6, change: 2.95, volume: '1.6亿' },
+        { name: 'TCL中环', code: '002129', price: 15.8, change: 1.85, volume: '1.2亿' },
+        { name: '阳光电源', code: '300274', price: 95.6, change: 4.12, volume: '0.9亿' },
+        { name: '晶澳科技', code: '002459', price: 18.5, change: 2.35, volume: '1.1亿' },
+        { name: '天合光能', code: '688599', price: 28.9, change: 3.15, volume: '0.7亿' }
+    ]},
+    { id: 'medical', name: '医药医疗', change: 1.25, change5d: 4.85, change1m: 8.92, volume: 78.5, marketCap: 1250, pe: 32.5, stocks: [
+        { name: '药明生物', code: '02269', price: 28.5, change: 2.15, volume: '1.2亿' },
+        { name: '百济神州', code: '06160', price: 125.8, change: 3.25, volume: '0.5亿' },
+        { name: '信达生物', code: '01801', price: 42.6, change: 1.85, volume: '0.8亿' },
+        { name: '复星医药', code: '02196', price: 18.5, change: -0.65, volume: '0.6亿' },
+        { name: '石药集团', code: '01093', price: 6.85, change: 0.95, volume: '1.1亿' },
+        { name: '中国生物制药', code: '01177', price: 3.25, change: 1.25, volume: '1.5亿' },
+        { name: '翰森制药', code: '03692', price: 18.9, change: 2.45, volume: '0.4亿' },
+        { name: '阿里健康', code: '00241', price: 4.25, change: -1.15, volume: '0.9亿' }
+    ]},
+    { id: 'consumption', name: '大消费', change: 0.85, change5d: 3.25, change1m: 6.78, volume: 95.6, marketCap: 1850, pe: 22.8, stocks: [
+        { name: '贵州茅台', code: '600519', price: 1685.0, change: 0.95, volume: '0.3亿' },
+        { name: '五粮液', code: '000858', price: 145.6, change: 1.25, volume: '0.5亿' },
+        { name: '海天味业', code: '603288', price: 38.5, change: -0.45, volume: '0.4亿' },
+        { name: '伊利股份', code: '600887', price: 28.9, change: 0.85, volume: '0.6亿' },
+        { name: '蒙牛乳业', code: '02319', price: 22.5, change: 1.15, volume: '0.8亿' },
+        { name: '华润啤酒', code: '00291', price: 35.8, change: 2.35, volume: '0.5亿' },
+        { name: '农夫山泉', code: '09633', price: 42.6, change: -0.85, volume: '0.3亿' },
+        { name: '百威亚太', code: '01876', price: 12.8, change: 0.65, volume: '0.4亿' }
+    ]}
+];
+
+// ============ 全局变量 ============
+let btcChart = null;
+let currentInterval = '15m';
+
+// ============ 初始化 ============
+$(document).ready(function() {
+    initBTCChart();
+    loadAllData();
+    
+    $('.time-btn').click(function() {
+        $('.time-btn').removeClass('active');
+        $(this).addClass('active');
+        currentInterval = $(this).data('interval');
+    });
+});
+
+// ============ BTC图表 ============
+function initBTCChart() {
+    btcChart = echarts.init(document.getElementById('btcChart'));
+    const times = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30'];
+    const option = {
+        backgroundColor: 'transparent',
+        animation: false,
+        grid: [{ left: '2%', right: '2%', top: '3%', height: '52%' }, { left: '2%', right: '2%', top: '58%', height: '18%' }, { left: '2%', right: '2%', top: '78%', height: '18%' }],
+        xAxis: [
+            { type: 'category', gridIndex: 0, data: times, axisLine: { lineStyle: { color: '#2d3142' } }, axisLabel: { color: '#64748b', fontSize: 9 } },
+            { type: 'category', gridIndex: 1, data: times, axisLine: { show: false }, axisLabel: { show: false } },
+            { type: 'category', gridIndex: 2, data: times, axisLine: { lineStyle: { color: '#2d3142' } }, axisLabel: { color: '#64748b', fontSize: 9 } }
+        ],
+        yAxis: [
+            { type: 'value', gridIndex: 0, axisLine: { show: false }, splitLine: { lineStyle: { color: '#2d3142' } }, axisLabel: { color: '#64748b', fontSize: 9 } },
+            { type: 'value', gridIndex: 1, axisLine: { show: false }, splitLine: { show: false }, axisLabel: { show: false } },
+            { type: 'value', gridIndex: 2, axisLine: { show: false }, splitLine: { show: false }, axisLabel: { color: '#64748b', fontSize: 9 } }
+        ],
+        series: [
+            { type: 'candlestick', xAxisIndex: 0, yAxisIndex: 0, data: [[72000,72500,71800,72400],[72400,72800,72200,72600],[72600,72700,72000,72100],[72100,72300,71900,72200],[72200,72600,72100,72500],[72500,72900,72400,72800],[72800,73000,72600,72900],[72900,73100,72700,73000],[73000,73200,72800,73100],[73100,73300,73000,73200]], itemStyle: { color: '#00d084', color0: '#ef4444', borderColor: '#00d084', borderColor0: '#ef4444' } },
+            { type: 'bar', xAxisIndex: 1, yAxisIndex: 1, data: [1200,1500,800,1100,1300,1600,1400,1200,1000,900], itemStyle: { color: '#00d084' } },
+            { type: 'line', xAxisIndex: 2, yAxisIndex: 2, data: [0.5,0.8,0.3,0.6,0.9,1.2,1.0,0.8,0.6,0.4], lineStyle: { color: '#3b82f6', width: 1 }, symbol: 'none' }
+        ]
+    };
+    btcChart.setOption(option);
+}
+
+// ============ 加载新闻 ============
+function loadNews() {
+    let html = '';
+    mockNews.forEach(news => {
+        const sentimentClass = news.sentiment_score > 0.2 ? 'positive' : news.sentiment_score < -0.2 ? 'negative' : 'neutral';
+        html += `
+            <div class="news-card ${sentimentClass} rounded" onclick="showNewsDetail(${news.id})">

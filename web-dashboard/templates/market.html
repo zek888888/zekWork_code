@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}市场数据 - 量化交易系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2><i class="bi bi-graph-up"></i> 市场数据</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 搜索和筛选 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="searchSymbol" placeholder="搜索标的代码...">
+                        </div>
+                    </div>
+                    <div class="col-md-8 text-md-end mt-3 mt-md-0">
+                        <button class="btn btn-outline-primary" onclick="refreshData()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 实时价格表格 -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-table"></i> 实时价格
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-sm mb-0" id="priceTable">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>标的</th>
+                                <th class="text-end">价格</th>
+                                <th class="text-end">涨跌幅</th>
+                                <th class="text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if prices %}
+                                {% for price in prices %}
+                                <tr onclick="showChart('{{ price.symbol }}')" style="cursor: pointer;">
+                                    <td><strong>{{ price.symbol }}</strong></td>
+                                    <td class="text-end">{{ "{:.2f}".format(price.price) }}</td>
+                                    <td class="text-end {% if price.change_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if price.change_percent >= 0 %}+{% endif %}{{ "{:.2f}".format(price.change_percent) }}%
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('trade') }}?symbol={{ price.symbol }}&action=buy" class="btn btn-sm btn-success">
+                                            <i class="bi bi-arrow-up"></i>
+                                        </a>
+                                        <a href="{{ url_for('trade') }}?symbol={{ price.symbol }}&action=sell" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-arrow-down"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">暂无数据</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- K线图 -->
+    <div class="col-lg-7 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-candlestick"></i> K线图</span>
+                <span id="chartSymbol" class="badge bg-primary">选择标的查看</span>
+            </div>
+            <div class="card-body">
+                <div id="klineChart" style="width: 100%; height: 450px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 涨跌幅排行 -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-arrow-up-circle"></i> 涨幅榜
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>标的</th>
+                                <th class="text-end">涨幅</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if prices %}
+                                {% for price in prices[:5] %}
+                                {% if price.change_percent > 0 %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ price.symbol }}</td>
+                                    <td class="text-end text-success">+{{ "{:.2f}".format(price.change_percent) }}%</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-arrow-down-circle"></i> 跌幅榜
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>标的</th>
+                                <th class="text-end">跌幅</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if prices %}
+                                {% for price in prices[-5:]|reverse %}
+                                {% if price.change_percent < 0 %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ price.symbol }}</td>
+                                    <td class="text-end text-danger">{{ "{:.2f}".format(price.change_percent) }}%</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let klineChart = null;
+
+// 初始化K线图
+function initKlineChart() {
+    const chartDom = document.getElementById('klineChart');
+    klineChart = echarts.init(chartDom);
+}
+
+// 显示K线图
+function showChart(symbol) {
+    document.getElementById('chartSymbol').textContent = symbol;
+    
+    // 获取K线数据
+    fetch(`/api/market-data/${symbol}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                // 使用模拟数据
+                generateMockData(symbol);
+                return;
+            }
+            
+            const dates = data.map(d => d.date);
+            const values = data.map(d => [d.open, d.close, d.low, d.high]);
+            const volumes = data.map(d => d.volume);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' }
+                },
+                legend: {
+                    data: ['K线', '成交量']
+                },
+                grid: [
+                    { left: '10%', right: '8%', height: '50%' },
+                    { left: '10%', right: '8%', top: '68%', height: '16%' }
+                ],
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: dates,
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: { onZero: false },
+                        splitLine: { show: false },
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    },
+                    {
+                        type: 'category',
+                        gridIndex: 1,
+                        data: dates,
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: { onZero: false },
+                        axisTick: { show: false },
+                        splitLine: { show: false },
+                        axisLabel: { show: false },
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    }
+                ],
+                yAxis: [
+                    {
+                        scale: true,
+                        splitArea: { show: true }
+                    },
+                    {
+                        scale: true,
+                        gridIndex: 1,
+                        splitNumber: 2,
+                        axisLabel: { show: false },
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        splitLine: { show: false }
+                    }
+                ],
+                dataZoom: [
+                    { type: 'inside', xAxisIndex: [0, 1], start: 50, end: 100 },
+                    { show: true, xAxisIndex: [0, 1], type: 'slider', top: '85%', start: 50, end: 100 }
+                ],
+                series: [
+                    {
+                        name: 'K线',
+                        type: 'candlestick',
+                        data: values,
+                        itemStyle: {
+                            color: '#ef5350',
+                            color0: '#26a69a',
+                            borderColor: '#ef5350',
+                            borderColor0: '#26a69a'
+                        }
+                    },
+                    {
+                        name: '成交量',
+                        type: 'bar',
+                        xAxisIndex: 1,
+                        yAxisIndex: 1,
+                        data: volumes,
+                        itemStyle: {
+                            color: function(params) {
+                                const value = values[params.dataIndex];
+                                return value[1] >= value[0] ? '#ef5350' : '#26a69a';
+                            }
+                        }
+                    }
+                ]
+            };
+            
+            klineChart.setOption(option);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            generateMockData(symbol);
+        });
+}
+
+// 生成模拟数据
+function generateMockData(symbol) {
+    const dates = [];
+    const values = [];
+    const volumes = [];
+    
+    let basePrice = 100;
+    for (let i = 30; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date.toISOString().split('T')[0]);
+        
+        const open = basePrice + (Math.random() - 0.5) * 5;
+        const close = open + (Math.random() - 0.5) * 5;
+        const low = Math.min(open, close) - Math.random() * 2;
+        const high = Math.max(open, close) + Math.random() * 2;
+        
+        values.push([open.toFixed(2), close.toFixed(2), low.toFixed(2), high.toFixed(2)]);
+        volumes.push(Math.floor(Math.random() * 1000000) + 500000);
+        
+        basePrice = close;
+    }
+    
+    const option = {
+        title: { text: symbol + ' (模拟数据)', left: 'center' },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross' }
+        },
+        grid: [
+            { left: '10%', right: '8%', height: '50%' },
+            { left: '10%', right: '8%', top: '68%', height: '16%' }
+        ],
+        xAxis: [
+            {
+                type: 'category',
+                data: dates,
+                scale: true
+            },
+            {
+                type: 'category',
+                gridIndex: 1,
+                data: dates
+            }
+        ],
+        yAxis: [
+            { scale: true },
+            { scale: true, gridIndex: 1 }
+        ],
+        series: [
+            {
+                name: 'K线',
+                type: 'candlestick',
+                data: values,
+                itemStyle: {
+                    color: '#ef5350',
+                    color0: '#26a69a'
+                }
+            },
+            {
+                name: '成交量',
+                type: 'bar',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                data: volumes
+            }
+        ]
+    };
+    
+    klineChart.setOption(option, true);
+}
+
+// 刷新数据
+function refreshData() {
+    location.reload();
+}
+
+// 搜索功能
+document.getElementById('searchSymbol').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#priceTable tbody tr');
+    
+    rows.forEach(row => {
+        const symbol = row.cells[0]?.textContent.toLowerCase();
+        if (symbol && symbol.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// 初始化
+window.addEventListener('load', function() {
+    initKlineChart();
+    // 如果有数据，显示第一个标的的图表
+    const firstRow = document.querySelector('#priceTable tbody tr');
+    if (firstRow) {
+        const symbol = firstRow.cells[0]?.textContent.trim();
+        if (symbol) showChart(symbol);
+    }
+});
+
+// 响应式
+window.addEventListener('resize', function() {
+    if (klineChart) klineChart.resize();
+});
+</script>
+{% endblock %}

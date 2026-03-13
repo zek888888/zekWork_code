@@ -1,0 +1,47 @@
+{
+    "project": "市场信息总览页面重构",
+    "description": "重新设计仪表板为市场信息总览，包含新闻聚焦、虚拟货币大盘、板块追踪、热点土狗、聪明钱包持仓五个模块",
+    "notify": true,
+    "tasks": [
+        {
+            "agent": "code",
+            "task": "创建市场信息总览页面框架：1) 修改templates/dashboard.html重命名为market_overview.html；2) 创建新的页面布局，包含五个模块区域：新闻聚焦、虚拟货币大盘、板块追踪、热点土狗、聪明钱包持仓；3) 使用shadcn-ui风格的卡片组件；4) 添加响应式网格布局。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "实现新闻聚焦模块：1) 从news表获取最新市场新闻数据；2) 展示新闻标题、来源、情绪分数、关键词；3) 添加新闻筛选功能（按情绪、按来源）；4) 实现新闻自动刷新（每5分钟）。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "实现虚拟货币大盘模块：1) 集成BTC/USDT 15分钟K线数据（使用币安API或CoinGecko API）；2) 使用ECharts绘制K线图，包含成交量、MACD指标；3) 实现数据自动更新（每15秒刷新）；4) 添加时间周期切换（15分钟/1小时/4小时/1天）。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "实现板块追踪模块：1) 定义关注的板块列表（科技、金融、消费、医药、新能源）；2) 每个板块展示3只龙头股；3) 展示股票名称、代码、涨跌幅、市值；4) 从数据库或API获取实时数据。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "实现热点土狗模块：1) 集成gmgn.ai API获取热门币种前10名；2) 展示币种名称、代码、价格、涨跌幅、市值；3) 添加手动刷新按钮；4) 实现自动刷新（每30秒）；5) 添加跳转到gmgn.ai的链接。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "实现聪明钱包持仓模块：1) 创建聪明钱包地址管理功能（添加/删除/编辑）；2) 集成区块链API（如DeBank API）获取钱包持仓；3) 展示持仓币种、数量、价值、占比；4) 实现钱包扫描功能；5) 保存钱包数据到数据库。",
+            "priority": "high"
+        },
+        {
+            "agent": "code",
+            "task": "创建API路由和数据模型：1) 在app.py中添加/gmgn/hot接口获取gmgn热门币种；2) 添加/smart_wallet/add接口添加聪明钱包；3) 添加/smart_wallet/scan接口扫描钱包持仓；4) 添加/news/latest接口获取最新新闻；5) 添加/crypto/btc接口获取BTC数据。",
+            "priority": "high"
+        },
+        {
+            "agent": "maintenance",
+            "task": "更新文档和导航：1) 更新README.md添加新功能说明；2) 修改base.html导航栏将'仪表板'改为'市场信息总览'；3) 更新CHANGELOG.md记录变更；4) 创建API文档说明新接口。",
+            "priority": "medium"
+        }
+    ]
+}

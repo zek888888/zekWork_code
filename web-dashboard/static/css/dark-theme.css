@@ -1,0 +1,607 @@
+/**
+ * 量化交易仪表盘 - 深色主题样式
+ * 设计风格：科技暗黑风 + 霓虹绿强调色
+ */
+
+/* ============================================
+   CSS 变量定义
+   ============================================ */
+:root {
+  /* 背景色 */
+  --bg-primary: #0d1117;
+  --bg-secondary: #1a1d29;
+  --bg-tertiary: #21262d;
+  --bg-card: #161b22;
+  --bg-hover: #1c2128;
+  
+  /* 文字色 */
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --text-accent: #00d084;
+  
+  /* 强调色 - 霓虹科技绿 */
+  --accent-primary: #00d084;
+  --accent-secondary: #10b981;
+  --accent-glow: rgba(0, 208, 132, 0.3);
+  --accent-glow-strong: rgba(0, 208, 132, 0.5);
+  
+  /* 状态色 */
+  --success: #00d084;
+  --success-bg: rgba(0, 208, 132, 0.15);
+  --danger: #f85149;
+  --danger-bg: rgba(248, 81, 73, 0.15);
+  --warning: #f0883e;
+  --warning-bg: rgba(240, 136, 62, 0.15);
+  --info: #58a6ff;
+  --info-bg: rgba(88, 166, 255, 0.15);
+  
+  /* 边框 */
+  --border-color: #30363d;
+  --border-subtle: #21262d;
+  --border-accent: rgba(0, 208, 132, 0.3);
+  
+  /* 间距 */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(0, 208, 132, 0.15);
+  
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s ease;
+}
+
+/* ============================================
+   基础样式覆盖
+   ============================================ */
+body {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* 导航栏深色样式 */
+.navbar {
+  background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%) !important;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+  color: var(--accent-primary) !important;
+  font-weight: 600;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.navbar-nav .nav-link {
+  color: var(--text-secondary) !important;
+  transition: color var(--transition-fast);
+  border-radius: var(--radius-sm);
+  margin: 0 2px;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: var(--accent-primary) !important;
+  background: rgba(0, 208, 132, 0.1);
+}
+
+.dropdown-menu {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+  color: var(--text-secondary);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   卡片样式
+   ============================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-glow), var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.card-header i {
+  color: var(--accent-primary);
+  margin-right: var(--spacing-sm);
+}
+
+.card-body {
+  color: var(--text-secondary);
+}
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* ============================================
+   指标卡片样式
+   ============================================ */
+.metric-card {
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+}
+
+.metric-card.bg-primary {
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, var(--bg-card) 100%) !important;
+  border-color: rgba(88, 166, 255, 0.3);
+}
+
+.metric-card.bg-success {
+  background: linear-gradient(135deg, var(--success-bg) 0%, var(--bg-card) 100%) !important;
+  border-color: rgba(0, 208, 132, 0.3);
+}
+
+.metric-card.bg-danger {
+  background: linear-gradient(135deg, var(--danger-bg) 0%, var(--bg-card) 100%) !important;
+  border-color: rgba(248, 81, 73, 0.3);
+}
+
+.metric-card.bg-info {
+  background: linear-gradient(135deg, var(--info-bg) 0%, var(--bg-card) 100%) !important;
+  border-color: rgba(88, 166, 255, 0.3);
+}
+
+.metric-card.bg-warning {
+  background: linear-gradient(135deg, var(--warning-bg) 0%, var(--bg-card) 100%) !important;
+  border-color: rgba(240, 136, 62, 0.3);
+}
+
+.metric-card .card-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.metric-card.bg-success .card-title {
+  color: var(--success);
+  text-shadow: 0 0 10px rgba(0, 208, 132, 0.3);
+}
+
+.metric-card.bg-danger .card-title {
+  color: var(--danger);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  font-size: 1.5rem;
+}
+
+.metric-card.bg-success .metric-icon {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.metric-card.bg-danger .metric-icon {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.metric-card.bg-info .metric-icon {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.metric-card.bg-warning .metric-icon {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+/* ============================================
+   按钮样式
+   ============================================ */
+.btn {
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  box-shadow: 0 4px 12px rgba(0, 208, 132, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #00e090 0%, #12c78a 100%);
+  box-shadow: 0 6px 16px rgba(0, 208, 132, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #f85149 0%, #da3633 100%);
+  box-shadow: 0 4px 12px rgba(248, 81, 73, 0.3);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #58a6ff 0%, #388bfd 100%);
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #39d0d8 0%, #2db7bd 100%);
+  box-shadow: 0 4px 12px rgba(57, 208, 216, 0.3);
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-outline-primary:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+/* ============================================
+   表格样式
+   ============================================ */
+.table {
+  color: var(--text-secondary);
+}
+
+.table thead th {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.table tbody td {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-hover tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ============================================
+   Badge 样式
+   ============================================ */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+  border-radius: var(--radius-sm);
+}
+
+.badge.bg-success {
+  background: var(--success-bg) !important;
+  color: var(--success);
+  border: 1px solid rgba(0, 208, 132, 0.3);
+}
+
+.badge.bg-danger {
+  background: var(--danger-bg) !important;
+  color: var(--danger);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.badge.bg-secondary {
+  background: rgba(110, 118, 129, 0.2) !important;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.badge.bg-primary {
+  background: var(--info-bg) !important;
+  color: var(--info);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+.badge.bg-info {
+  background: rgba(57, 208, 216, 0.15) !important;
+  color: #39d0d8;
+  border: 1px solid rgba(57, 208, 216, 0.3);
+}
+
+.badge.bg-light {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+/* ============================================
+   进度条样式
+   ============================================ */
+.progress {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 8px;
+}
+
+.progress-bar.bg-success {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)) !important;
+  box-shadow: 0 0 8px rgba(0, 208, 132, 0.4);
+}
+
+.progress-bar.bg-info {
+  background: linear-gradient(90deg, #58a6ff, #388bfd) !important;
+}
+
+.progress-bar.bg-warning {
+  background: linear-gradient(90deg, #f0883e, #d47632) !important;
+}
+
+.progress-bar.bg-danger {
+  background: linear-gradient(90deg, #f85149, #da3633) !important;
+}
+
+/* ============================================
+   新闻卡片样式
+   ============================================ */
+.news-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.news-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.news-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.news-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.news-item {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.news-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--border-color);
+  transition: background var(--transition-normal);
+}
+
+.news-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-accent);
+  transform: translateX(4px);
+}
+
+.news-item.border-success {
+  border-color: rgba(0, 208, 132, 0.3);
+  background: linear-gradient(90deg, rgba(0, 208, 132, 0.05) 0%, var(--bg-tertiary) 100%);
+}
+
+.news-item.border-success::before {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(0, 208, 132, 0.5);
+}
+
+.news-item.border-danger {
+  border-color: rgba(248, 81, 73, 0.3);
+  background: linear-gradient(90deg, rgba(248, 81, 73, 0.05) 0%, var(--bg-tertiary) 100%);
+}
+
+.news-item.border-danger::before {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(248, 81, 73, 0.5);
+}
+
+.news-item p {
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ============================================
+   图表容器样式
+   ============================================ */
+canvas {
+  max-height: 100%;
+}
+
+/* ============================================
+   警告/提示框样式
+   ============================================ */
+.alert {
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.alert-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+}
+
+.alert-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border-left: 3px solid var(--success);
+}
+
+.alert-info {
+  background: var(--info-bg);
+  color: var(--info);
+  border-left: 3px solid var(--info);
+}
+
+/* ============================================
+   页面标题样式
+   ============================================ */
+h2 {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+h2 i {
+  color: var(--accent-primary);
+  margin-right: var(--spacing-sm);
+}
+
+/* ============================================
+   响应式适配
+   ============================================ */
+@media (max-width: 768px) {
+  .metric-card .card-title {
+    font-size: 1.4rem;
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .card {
+    border-radius: var(--radius-md);
+  }
+  
+  .btn-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 0.9rem;
+  }
+  
+  .card-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .news-item {
+    padding: var(--spacing-sm) !important;
+  }
+}
+
+/* ============================================
+   动画效果
+   ============================================ */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--accent-glow-strong);
+  }
+}
+
+.metric-card.bg-success:hover {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* 数字变化动画 */
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-title {
+  animation: count-up 0.5s ease-out;
+}

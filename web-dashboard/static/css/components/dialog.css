@@ -1,0 +1,167 @@
+/** ============================================
+   Dialog 模态对话框组件样式
+   参考 shadcn-ui Dialog 组件设计
+   ============================================ */
+
+/* 遮罩层 */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.dialog-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 对话框容器 */
+.dialog {
+    background-color: var(--card-background, #1e2230);
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dialog.active {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* 对话框头部 */
+.dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+    border-bottom: none;
+}
+
+.dialog-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    line-height: 1.4;
+}
+
+.dialog-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-muted, #64748b);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dialog-close:hover {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #f1f5f9);
+}
+
+/* 对话框内容 */
+.dialog-content {
+    padding: 20px 24px;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.dialog-content p {
+    margin: 0 0 12px;
+}
+
+.dialog-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* 对话框底部 */
+.dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 0 24px 20px;
+}
+
+.dialog-footer .btn {
+    min-width: 80px;
+}
+
+/* 对话框尺寸变体 */
+.dialog-sm { width: 400px; }
+.dialog-md { width: 520px; }
+.dialog-lg { width: 720px; }
+.dialog-xl { width: 920px; }
+.dialog-full { width: calc(100vw - 64px); }
+
+/* 对话框动画 */
+@keyframes dialog-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes dialog-exit {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+    .dialog {
+        width: calc(100vw - 32px) !important;
+        margin: 16px;
+    }
+    
+    .dialog-header {
+        padding: 16px 20px 0;
+    }
+    
+    .dialog-content {
+        padding: 16px 20px;
+    }
+    
+    .dialog-footer {
+        padding: 0 20px 16px;
+        flex-direction: column-reverse;
+    }
+    
+    .dialog-footer .btn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}交易信号 - 量化交易系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2><i class="bi bi-lightning"></i> 交易信号</h2>
+    </div>
+</div>
+
+<!-- 筛选栏 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('signals') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">信号强度</label>
+                        <select name="rating" class="form-select">
+                            <option value="">全部</option>
+                            <option value="80" {% if request.args.get('rating') == '80' %}selected{% endif %}>强 (≥80)</option>
+                            <option value="60" {% if request.args.get('rating') == '60' %}selected{% endif %}>中 (≥60)</option>
+                            <option value="40" {% if request.args.get('rating') == '40' %}selected{% endif %}>弱 (≥40)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">市场筛选</label>
+                        <input type="text" name="market" class="form-control" placeholder="输入标的代码..." 
+                               value="{{ request.args.get('market', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-funnel"></i> 筛选
+                            </button>
+                            <a href="{{ url_for('signals') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> 重置
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 当前交易信号列表 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-list-stars"></i> 当前交易信号</span>
+                <span class="badge bg-primary">{{ signals|length }} 个信号</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>标的</th>
+                                <th>当前价格</th>
+                                <th>信号类型</th>
+                                <th>强度评分</th>
+                                <th>生成时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if signals %}
+                                {% for signal in signals %}
+                                <tr>
+                                    <td><strong>{{ signal.symbol }}</strong></td>
+                                    <td>¥{{ "{:.2f}".format(signal.current_price or 0) }}</td>
+                                    <td>
+                                        {% if signal.signal_type == 'buy' %}
+                                            <span class="badge bg-success fs-6"><i class="bi bi-arrow-up-circle"></i> 买入</span>
+                                        {% elif signal.signal_type == 'sell' %}
+                                            <span class="badge bg-danger fs-6"><i class="bi bi-arrow-down-circle"></i> 卖出</span>
+                                        {% elif signal.signal_type == 'hold' %}
+                                            <span class="badge bg-info fs-6"><i class="bi bi-pause-circle"></i> 持有</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary fs-6">{{ signal.signal_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if signal.confidence >= 80 %}bg-success
+                                                    {% elif signal.confidence >= 60 %}bg-info
+                                                    {% elif signal.confidence >= 40 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ signal.confidence }}%">
+                                                </div>
+                                            </div>
+                                            <span class="ms-2 fw-bold">{{ signal.confidence | int if signal.confidence else 0 }}%</span>
+                                        </div>
+                                    </td>
+                                    <td><small class="text-muted">{{ signal.created_at }}</small></td>
+                                    <td>
+                                        <a href="{{ url_for('trade') }}?symbol={{ signal.symbol }}&action={{ signal.signal_type }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-play-fill"></i> 执行
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <p class="mt-3">暂无交易信号</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 信号统计 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> 信号分布
+            </div>
+            <div class="card-body">
+                <canvas id="signalChart" height="200"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> 历史回测表现
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-success text-white rounded">
+                            <div class="fs-4 fw-bold">68%</div>
+                            <small>胜率</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-info text-white rounded">
+                            <div class="fs-4 fw-bold">2.4</div>
+                            <small>盈亏比</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-warning text-dark rounded">
+                            <div class="fs-4 fw-bold">15.2%</div>
+                            <small>年化收益</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-danger text-white rounded">
+                            <div class="fs-4 fw-bold">-8.5%</div>
+                            <small>最大回撤</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 历史回测结果 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> 历史信号回测结果
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>月份</th>
+                                <th>信号数量</th>
+                                <th>成功信号</th>
+                                <th>失败信号</th>
+                                <th>胜率</th>
+                                <th>平均收益</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-01</td>
+                                <td>45</td>
+                                <td class="text-success">32</td>
+                                <td class="text-danger">13</td>
+                                <td>71.1%</td>
+                                <td class="text-success">+3.2%</td>
+                            </tr>
+                            <tr>
+                                <td>2024-02</td>
+                                <td>38</td>
+                                <td class="text-success">25</td>
+                                <td class="text-danger">13</td>
+                                <td>65.8%</td>
+                                <td class="text-success">+2.1%</td>
+                            </tr>
+                            <tr>
+                                <td>2024-03</td>
+                                <td>52</td>
+                                <td class="text-success">36</td>
+                                <td class="text-danger">16</td>
+                                <td>69.2%</td>
+                                <td class="text-success">+4.5%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 信号分布饼图
+const ctx = document.getElementById('signalChart').getContext('2d');
+const signalChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['买入信号', '卖出信号', '持有信号'],
+        datasets: [{
+            data: [45, 30, 25],
+            backgroundColor: [
+                '#198754',  // success
+                '#dc3545',  // danger
+                '#0dcaf0'   // info
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

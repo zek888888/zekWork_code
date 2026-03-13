@@ -1,0 +1,290 @@
+/** ============================================
+   Toast 消息提示组件样式
+   参考 shadcn-ui Toast 组件设计
+   ============================================ */
+
+/* Toast 容器 */
+.toast-container {
+    position: fixed;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.toast-container[data-position="top-left"] {
+    top: 16px;
+    left: 16px;
+}
+
+.toast-container[data-position="top-center"] {
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toast-container[data-position="top-right"] {
+    top: 16px;
+    right: 16px;
+}
+
+.toast-container[data-position="bottom-left"] {
+    bottom: 16px;
+    left: 16px;
+    flex-direction: column-reverse;
+}
+
+.toast-container[data-position="bottom-center"] {
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column-reverse;
+}
+
+.toast-container[data-position="bottom-right"] {
+    bottom: 16px;
+    right: 16px;
+    flex-direction: column-reverse;
+}
+
+/* Toast 消息项 */
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background-color: var(--card-background, #1e2230);
+    border: 1px solid var(--border-color, #2d3142);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.toast.active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.closing {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Toast 类型样式 */
+.toast-success {
+    border-left: 4px solid var(--success-color, #00d084);
+}
+
+.toast-error {
+    border-left: 4px solid var(--danger-color, #ef4444);
+}
+
+.toast-warning {
+    border-left: 4px solid var(--warning-color, #f59e0b);
+}
+
+.toast-info {
+    border-left: 4px solid var(--info-color, #3b82f6);
+}
+
+/* Toast 图标 */
+.toast-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-icon .ti {
+    font-size: 24px;
+}
+
+.toast-success .toast-icon {
+    color: var(--success-color, #00d084);
+}
+
+.toast-error .toast-icon {
+    color: var(--danger-color, #ef4444);
+}
+
+.toast-warning .toast-icon {
+    color: var(--warning-color, #f59e0b);
+}
+
+.toast-info .toast-icon {
+    color: var(--info-color, #3b82f6);
+}
+
+/* Toast 内容 */
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    line-height: 1.4;
+}
+
+.toast-message {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.5;
+}
+
+/* Toast 关闭按钮 */
+.toast-close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-muted, #64748b);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toast-close:hover {
+    background-color: var(--hover-background, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #f1f5f9);
+}
+
+/* Toast 进度条 */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.toast-progress-bar {
+    height: 100%;
+    width: 100%;
+    background-color: currentColor;
+    opacity: 0.3;
+    transform-origin: left;
+}
+
+.toast-success .toast-progress-bar {
+    background-color: var(--success-color, #00d084);
+}
+
+.toast-error .toast-progress-bar {
+    background-color: var(--danger-color, #ef4444);
+}
+
+.toast-warning .toast-progress-bar {
+    background-color: var(--warning-color, #f59e0b);
+}
+
+.toast-info .toast-progress-bar {
+    background-color: var(--info-color, #3b82f6);
+}
+
+/* 动画 */
+@keyframes toast-enter {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-exit {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* 从左侧进入的动画 */
+.toast-container[data-position*="left"] .toast {
+    transform: translateX(-100%);
+}
+
+.toast-container[data-position*="left"] .toast.active {
+    transform: translateX(0);
+}
+
+.toast-container[data-position*="left"] .toast.closing {
+    transform: translateX(-100%);
+}
+
+/* 从顶部进入的动画（用于上下布局） */
+.toast-container[data-position*="bottom"] .toast {
+    transform: translateY(100%);
+}
+
+.toast-container[data-position*="bottom"] .toast.active {
+    transform: translateY(0);
+}
+
+.toast-container[data-position*="bottom"] .toast.closing {
+    transform: translateY(100%);
+}
+
+/* 从顶部居中进入 */
+.toast-container[data-position="top-center"] .toast,
+.toast-container[data-position="bottom-center"] .toast {
+    transform: translateY(-20px) scale(0.95);
+}
+
+.toast-container[data-position="top-center"] .toast.active,
+.toast-container[data-position="bottom-center"] .toast.active {
+    transform: translateY(0) scale(1);
+}
+
+.toast-container[data-position="top-center"] .toast.closing,
+.toast-container[data-position="bottom-center"] .toast.closing {
+    transform: translateY(-20px) scale(0.95);
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+    .toast-container {
+        left: 16px !important;
+        right: 16px !important;
+        max-width: none;
+        transform: none !important;
+    }
+    
+    .toast-container[data-position*="center"] {
+        left: 16px !important;
+        right: 16px !important;
+        transform: none !important;
+    }
+    
+    .toast {
+        width: 100%;
+    }
+}
