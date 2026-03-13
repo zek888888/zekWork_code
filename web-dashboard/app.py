@@ -415,27 +415,139 @@ def market_overview():
 @app.route('/api/news/latest')
 @login_required
 def latest_news_api():
-    """获取最新新闻"""
+    """获取最新新闻 - 支持时间范围筛选"""
     conn = get_db_connection()
+    
+    # 获取查询参数
+    hours = request.args.get('hours', type=int, default=24)
+    start_time = request.args.get('start_time')  # ISO格式
+    end_time = request.args.get('end_time')      # ISO格式
+    limit = request.args.get('limit', type=int, default=50)
+    sentiment_filter = request.args.get('sentiment')  # bullish/bearish/neutral/all
+    
     try:
-        news = conn.execute(
-            """SELECT id, source, title, content, sentiment_score, sentiment_label, 
-                      keywords, published_at
-               FROM news 
-               ORDER BY published_at DESC LIMIT 10"""
-        ).fetchall()
+        query = """SELECT id, source, title, content, sentiment_score, sentiment_label, 
+                      keywords, published_at, created_at
+               FROM news WHERE 1=1"""
+        params = []
+        
+        # 时间范围筛选
+        if start_time and end_time:
+            query += " AND published_at BETWEEN ? AND ?"
+            params.extend([start_time, end_time])
+        elif hours:
+            since = (datetime.now() - timedelta(hours=hours)).isoformat()
+            query += " AND published_at > ?"
+            params.append(since)
+        
+        # 情绪筛选
+        if sentiment_filter == 'bullish':
+            query += " AND sentiment_score > 0.2"
+        elif sentiment_filter == 'bearish':
+            query += " AND sentiment_score < -0.2"
+        elif sentiment_filter == 'neutral':
+            query += " AND sentiment_score BETWEEN -0.2 AND 0.2"
+        
+        query += " ORDER BY published_at DESC LIMIT ?"
+        params.append(limit)
+        
+        news = conn.execute(query, params).fetchall()
         
         result = [{
             'id': n['id'],
             'source': n['source'],
             'title': n['title'],
+            'content': n['content'][:200] + '...' if n['content'] and len(n['content']) > 200 else n['content'],
             'sentiment_score': n['sentiment_score'] or 0,
             'sentiment_label': n['sentiment_label'] or 'neutral',
             'keywords': n['keywords'] or '',
-            'published_at': n['published_at']
+            'published_at': n['published_at'],
+            'created_at': n['created_at']
         } for n in news]
-    except:
-        result = []
+        
+        # 获取统计信息
+        stats_query = """SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN sentiment_score > 0.2 THEN 1 ELSE 0 END) as bullish,
+            SUM(CASE WHEN sentiment_score < -0.2 THEN 1 ELSE 0 END) as bearish,
+            AVG(sentiment_score) as avg_sentiment
+            FROM news WHERE published_at > ?"""
+        
+        since_for_stats = (datetime.now() - timedelta(hours=hours)).isoformat()
+        stats = conn.execute(stats_query, (since_for_stats,)).fetchone()
+        
+        response = {
+            'news': result,
+            'stats': {
+                'total': stats['total'] or 0,
+                'bullish': stats['bullish'] or 0,
+                'bearish': stats['bearish'] or 0,
+                'neutral': (stats['total'] or 0) - (stats['bullish'] or 0) - (stats['bearish'] or 0),
+                'avg_sentiment': round(stats['avg_sentiment'] or 0, 3)
+            },
+            'filters': {
+                'hours': hours,
+                'sentiment': sentiment_filter,
+                'limit': limit
+            }
+        }
+        
+    except Exception as e:
+        response = {'news': [], 'stats': {}, 'error': str(e)}
+    
+    conn.close()
+    return jsonify(response)
+
+@app.route('/api/news/stats')
+@login_required
+def news_stats_api():
+    """获取新闻统计信息"""
+    conn = get_db_connection()
+    
+    hours = request.args.get('hours', type=int, default=24)
+    since = (datetime.now() - timedelta(hours=hours)).isoformat()
+    
+    try:
+        # 新闻统计
+        stats = conn.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN sentiment_score > 0.2 THEN 1 ELSE 0 END) as bullish,
+                SUM(CASE WHEN sentiment_score < -0.2 THEN 1 ELSE 0 END) as bearish,
+                AVG(sentiment_score) as avg_sentiment,
+                MAX(published_at) as latest_news_time
+            FROM news WHERE published_at > ?
+        """, (since,)).fetchone()
+        
+        # 抓取日志统计
+        fetch_stats = conn.execute("""
+            SELECT 
+                COUNT(*) as fetch_count,
+                SUM(items_new) as total_new,
+                MAX(fetch_time) as last_fetch_time
+            FROM news_fetch_log 
+            WHERE fetch_time > ? AND status = 'success'
+        """, (since,)).fetchone()
+        
+        result = {
+            'period_hours': hours,
+            'news_stats': {
+                'total': stats['total'] or 0,
+                'bullish': stats['bullish'] or 0,
+                'bearish': stats['bearish'] or 0,
+                'neutral': (stats['total'] or 0) - (stats['bullish'] or 0) - (stats['bearish'] or 0),
+                'avg_sentiment': round(stats['avg_sentiment'] or 0, 3),
+                'latest_news_time': stats['latest_news_time']
+            },
+            'fetch_stats': {
+                'fetch_count': fetch_stats['fetch_count'] or 0,
+                'total_new_items': fetch_stats['total_new'] or 0,
+                'last_fetch_time': fetch_stats['last_fetch_time']
+            }
+        }
+        
+    except Exception as e:
+        result = {'error': str(e)}
     
     conn.close()
     return jsonify(result)

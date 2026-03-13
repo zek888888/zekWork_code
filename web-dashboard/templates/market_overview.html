@@ -199,6 +199,22 @@
 .news-badge.negative { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
 .news-badge.neutral { background: rgba(100, 116, 139, 0.15); color: #64748b; }
 
+/* 关键词标签 */
+.news-keywords {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.keyword-tag {
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
 /* ========== BTC 区域 ========== */
 .btc-header {
     display: flex;
@@ -244,6 +260,53 @@
     background: var(--primary-color);
     border-color: var(--primary-color);
     color: #000;
+}
+
+/* 时间筛选器下拉框 */
+.time-filter {
+    padding: 3px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 10px;
+    cursor: pointer;
+    outline: none;
+}
+
+.time-filter:hover {
+    border-color: var(--primary-color);
+}
+
+.time-filter option {
+    background: var(--card-background);
+    color: var(--text-primary);
+}
+
+/* 新闻统计条 */
+.news-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 10px;
+}
+
+.news-stats-bar .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+}
+
+.news-stats-bar .stat-item.positive {
+    color: #00d084;
+}
+
+.news-stats-bar .stat-item.negative {
+    color: #ef4444;
 }
 
 .chart-container {
@@ -591,9 +654,41 @@
                     <span class="section-icon icon-news"><i class="ti ti-news"></i></span>
                     <h2>新闻聚焦</h2>
                 </div>
-                <button class="refresh-btn" onclick="refreshNews()" style="padding: 2px 6px;">
-                    <i class="ti ti-refresh" style="font-size: 10px;"></i>
-                </button>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <!-- 时间筛选器 -->
+                    <select id="newsTimeFilter" class="time-filter" onchange="loadNews()">
+                        <option value="1">1小时</option>
+                        <option value="6">6小时</option>
+                        <option value="12">12小时</option>
+                        <option value="24" selected>24小时</option>
+                        <option value="72">3天</option>
+                    </select>
+                    <!-- 情绪筛选器 -->
+                    <select id="newsSentimentFilter" class="time-filter" onchange="loadNews()">
+                        <option value="all">全部</option>
+                        <option value="bullish">看涨</option>
+                        <option value="bearish">看跌</option>
+                        <option value="neutral">中性</option>
+                    </select>
+                    <button class="refresh-btn" onclick="refreshNews()" style="padding: 2px 6px;">
+                        <i class="ti ti-refresh" style="font-size: 10px;"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- 新闻统计条 -->
+            <div class="news-stats-bar" id="newsStatsBar" style="display: none;">
+                <span class="stat-item">
+                    <i class="ti ti-news"></i> <span id="newsTotal">0</span>
+                </span>
+                <span class="stat-item positive">
+                    <i class="ti ti-trending-up"></i> <span id="newsBullish">0</span>
+                </span>
+                <span class="stat-item negative">
+                    <i class="ti ti-trending-down"></i> <span id="newsBearish">0</span>
+                </span>
+                <span class="stat-item" style="margin-left: auto; font-size: 9px;">
+                    上次更新: <span id="newsLastUpdate">--</span>
+                </span>
             </div>
             <div class="card-body" id="newsContainer">
                 <div class="empty-state">
@@ -753,23 +848,144 @@ let trackedWallets = [...mockData.wallets];
 const formatPrice = (p) => p >= 1000000 ? `$${(p/1000000).toFixed(2)}M` : p >= 1000 ? `$${(p/1000).toFixed(2)}K` : p < 0.001 ? `$${p.toExponential(2)}` : `$${p.toFixed(p<0.01?6:4)}`;
 const formatAddress = (a) => a ? `${a.slice(0,6)}...${a.slice(-4)}` : a;
 
-// ========== 渲染新闻 ==========
-function renderNews() {
-    const html = mockData.news.map(n => {
-        const cls = n.sentiment > 0.2 ? 'positive' : n.sentiment < -0.2 ? 'negative' : 'neutral';
+// ========== 新闻相关函数 ==========
+
+// 从API加载新闻
+function loadNews() {
+    const hours = document.getElementById('newsTimeFilter').value;
+    const sentiment = document.getElementById('newsSentimentFilter').value;
+    
+    // 显示加载状态
+    document.getElementById('newsContainer').innerHTML = `
+        <div class="empty-state">
+            <i class="ti ti-loader-2 ti-spin"></i>
+            <div style="font-size: 10px; margin-top: 8px;">加载中...</div>
+        </div>
+    `;
+    
+    // 从API获取新闻
+    fetch(`/api/news/latest?hours=${hours}&sentiment=${sentiment}&limit=50`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                console.error('获取新闻失败:', data.error);
+                // 使用模拟数据
+                renderNewsList(mockData.news.map(n => ({
+                    ...n,
+                    published_at: new Date().toISOString(),
+                    sentiment_score: n.sentiment,
+                    sentiment_label: n.label,
+                    content: n.title
+                })));
+                return;
+            }
+            
+            // 更新统计信息
+            updateNewsStats(data.stats);
+            
+            // 渲染新闻列表
+            if (data.news && data.news.length > 0) {
+                renderNewsList(data.news);
+            } else {
+                renderNewsList([]);
+            }
+        })
+        .catch(err => {
+            console.error('获取新闻错误:', err);
+            // 使用模拟数据
+            renderNewsList(mockData.news.map(n => ({
+                ...n,
+                published_at: new Date().toISOString(),
+                sentiment_score: n.sentiment,
+                sentiment_label: n.label,
+                content: n.title
+            })));
+        });
+}
+
+// 更新新闻统计
+function updateNewsStats(stats) {
+    if (!stats || Object.keys(stats).length === 0) {
+        document.getElementById('newsStatsBar').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('newsStatsBar').style.display = 'flex';
+    document.getElementById('newsTotal').textContent = stats.total || 0;
+    document.getElementById('newsBullish').textContent = stats.bullish || 0;
+    document.getElementById('newsBearish').textContent = stats.bearish || 0;
+    
+    const now = new Date();
+    document.getElementById('newsLastUpdate').textContent = 
+        `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// 渲染新闻列表
+function renderNewsList(newsList) {
+    if (!newsList || newsList.length === 0) {
+        document.getElementById('newsContainer').innerHTML = `
+            <div class="empty-state">
+                <i class="ti ti-news-off"></i>
+                <div style="font-size: 10px; margin-top: 8px;">该时段暂无新闻</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const html = newsList.map(news => {
+        const sentimentClass = news.sentiment_score > 0.2 ? 'positive' : news.sentiment_score < -0.2 ? 'negative' : 'neutral';
+        const sentimentIcon = news.sentiment_score > 0.2 ? '🟢' : news.sentiment_score < -0.2 ? '🔴' : '⚪';
+        
+        // 格式化时间
+        let timeStr = '--:--';
+        if (news.published_at) {
+            const pubTime = new Date(news.published_at);
+            timeStr = `${pubTime.getHours().toString().padStart(2, '0')}:${pubTime.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // 关键词标签
+        let keywordsHtml = '';
+        if (news.keywords) {
+            try {
+                const keywords = typeof news.keywords === 'string' ? JSON.parse(news.keywords) : news.keywords;
+                if (Array.isArray(keywords) && keywords.length > 0) {
+                    keywordsHtml = `<div class="news-keywords">${keywords.slice(0, 2).map(k => `<span class="keyword-tag">${k}</span>`).join('')}</div>`;
+                }
+            } catch(e) {}
+        }
+        
         return `
-            <div class="news-item ${cls}" onclick="showNewsDetail(${n.id})">
-                <div class="news-title">${n.title}</div>
+            <div class="news-item ${sentimentClass}" onclick="showNewsDetail(${news.id})">
+                <div class="news-title">${sentimentIcon} ${news.title || (news.content ? news.content.substring(0, 50) + '...' : '无标题')}</div>
                 <div class="news-meta">
-                    <span>${n.source}</span>
+                    <span class="news-badge ${sentimentClass}">${news.sentiment_label || '中性'}</span>
                     <span>·</span>
-                    <span>${n.time}</span>
-                    <span class="news-badge ${cls}">${n.label}</span>
+                    <span>${timeStr}</span>
                 </div>
+                ${keywordsHtml}
             </div>
         `;
     }).join('');
+    
     document.getElementById('newsContainer').innerHTML = `<div class="news-list">${html}</div>`;
+}
+
+// 刷新新闻
+function refreshNews() {
+    // 刷新按钮动画
+    const btn = document.querySelector('.card-header .refresh-btn i');
+    if (btn) btn.classList.add('ti-spin');
+    
+    loadNews();
+    
+    setTimeout(() => {
+        if (btn) btn.classList.remove('ti-spin');
+    }, 1000);
+}
+
+// 旧的渲染函数（兼容）
+function renderNews() {
+    loadNews();
 }
 
 // ========== 渲染土狗币 ==========
@@ -1096,12 +1312,19 @@ function refreshAllData() {
 
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', function() {
-    renderNews();
+    loadNews();          // 从API加载新闻
     renderMemeCoins();
     renderWallets();
     renderSectors();
     initBTCChart();
     document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN');
+    
+    // 每30秒自动刷新新闻
+    setInterval(() => {
+        if (!document.hidden) {  // 页面可见时才刷新
+            loadNews();
+        }
+    }, 30000);
     
     window.addEventListener('resize', () => btcChart && btcChart.resize());
     document.getElementById('detailModal').addEventListener('click', (e) => {
