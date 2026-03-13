@@ -728,15 +728,101 @@ const mockSectors = [
 let btcChart = null;
 let currentInterval = '15m';
 
+// ============ 加载土狗币 ============
+function loadMemeCoins() {
+    let html = '';
+    mockMemeCoins.forEach(coin => {
+        const changeClass = coin.change_24h >= 0 ? 'positive' : 'negative';
+        const changeSymbol = coin.change_24h >= 0 ? '+' : '';
+        html += `
+            <div class="meme-card ${changeClass} rounded" onclick="showMemeDetail(${coin.id})">
+                <div class="meme-header">
+                    <span class="meme-name">${coin.name}</span>
+                    <span class="meme-symbol">${coin.symbol}</span>
+                </div>
+                <div class="meme-price">$${coin.price.toFixed(coin.price < 0.001 ? 8 : 4)}</div>
+                <div class="meme-change">
+                    <span class="change-24h ${changeClass}">${changeSymbol}${coin.change_24h.toFixed(2)}%</span>
+                    <span class="change-7d">7d: ${coin.change_7d >= 0 ? '+' : ''}${coin.change_7d.toFixed(2)}%</span>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('memeContainer').innerHTML = html;
+}
+
+// ============ 加载聪明钱包 ============
+function loadWallets() {
+    let html = '';
+    mockWallets.forEach(wallet => {
+        const profitClass = wallet.profit24h >= 0 ? 'positive' : 'negative';
+        html += `
+            <div class="wallet-card rounded" onclick="showWalletDetail(${wallet.id})">
+                <div class="wallet-header">
+                    <span class="wallet-tag">${wallet.tag}</span>
+                    <span class="wallet-profit ${profitClass}">${wallet.profit24h >= 0 ? '+' : ''}${wallet.profitRate24h.toFixed(2)}%</span>
+                </div>
+                <div class="wallet-value">$${(wallet.totalValue / 1000000).toFixed(2)}M</div>
+                <div class="wallet-stats">
+                    <span>24h交易: ${wallet.trades24h}</span>
+                    <span>胜率: ${wallet.winRate}%</span>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('walletContainer').innerHTML = html;
+}
+
+// ============ 加载板块 ============
+function loadSectors() {
+    let html = '';
+    mockSectors.forEach(sector => {
+        const changeClass = sector.change >= 0 ? 'positive' : 'negative';
+        html += `
+            <div class="sector-card rounded" onclick="showSectorDetail('${sector.id}')">
+                <div class="sector-header">
+                    <span class="sector-name">${sector.name}</span>
+                    <span class="sector-change ${changeClass}">${sector.change >= 0 ? '+' : ''}${sector.change.toFixed(2)}%</span>
+                </div>
+                <div class="sector-stocks">${sector.stocks.length} 只股票</div>
+            </div>
+        `;
+    });
+    document.getElementById('sectorContainer').innerHTML = html;
+}
+
+// ============ 显示详情弹窗 ============
+function showMemeDetail(id) {
+    const coin = mockMemeCoins.find(c => c.id === id);
+    if (coin) {
+        alert(`${coin.name} (${coin.symbol})\n价格: $${coin.price}\n24h: ${coin.change_24h}%\n7d: ${coin.change_7d}%\n市值: $${(coin.marketCap / 1000000).toFixed(0)}M`);
+    }
+}
+
+function showWalletDetail(id) {
+    const wallet = mockWallets.find(w => w.id === id);
+    if (wallet) {
+        let holdings = wallet.holdings.map(h => `${h.token}: ${h.amount} ($${(h.value / 1000).toFixed(0)}K)`).join('\n');
+        alert(`${wallet.tag} 钱包\n总值: $${(wallet.totalValue / 1000000).toFixed(2)}M\n24h收益: ${wallet.profitRate24h}%\n\n持仓:\n${holdings}`);
+    }
+}
+
+function showSectorDetail(id) {
+    const sector = mockSectors.find(s => s.id === id);
+    if (sector) {
+        let stocks = sector.stocks.map(s => `${s.name} (${s.code}): ${s.change}%`).join('\n');
+        alert(`${sector.name}\n涨跌: ${sector.change}%\n5日: ${sector.change5d}%\n1月: ${sector.change1m}%\n\n成分股:\n${stocks}`);
+    }
+}
+
 // ============ 初始化 ============
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     initBTCChart();
-    loadAllData();
-    
-    $('.time-btn').click(function() {
-        $('.time-btn').removeClass('active');
-        $(this).addClass('active');
-        currentInterval = $(this).data('interval');
+    loadNews();
+    loadMemeCoins();
+    loadWallets();
+    loadSectors();
+});
     });
 });
 
@@ -774,3 +860,33 @@ function loadNews() {
         const sentimentClass = news.sentiment_score > 0.2 ? 'positive' : news.sentiment_score < -0.2 ? 'negative' : 'neutral';
         html += `
             <div class="news-card ${sentimentClass} rounded" onclick="showNewsDetail(${news.id})">
+                <div class="news-header">
+                    <span class="news-source">${news.source}</span>
+                    <span class="news-time">${news.time}</span>
+                </div>
+                <div class="news-title">${news.title}</div>
+                <div class="news-sentiment">
+                    <span class="sentiment-badge ${sentimentClass}">${news.sentiment_label}</span>
+                    <span class="sentiment-score">${(news.sentiment_score * 100).toFixed(0)}%</span>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('newsContainer').innerHTML = html;
+}
+
+// ============ 显示新闻详情 ============
+function showNewsDetail(id) {
+    const news = mockNews.find(n => n.id === id);
+    if (news) {
+        alert(`[${news.source}] ${news.title}\n\n情绪: ${news.sentiment_label} (${(news.sentiment_score * 100).toFixed(0)}%)\n时间: ${news.time}`);
+    }
+}
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', function() {
+    initBTCChart();
+    loadNews();
+});
+</script>
+{% endblock %}
