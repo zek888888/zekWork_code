@@ -4,48 +4,49 @@
 
 {% block extra_css %}
 <style>
-/* ========== 基础布局 - 一屏展示 ========== */
+/* ========== 基础布局 - 一屏展示优化 ========== */
 .market-overview {
-    padding: 8px 12px;
-    font-size: 11px;
-    height: calc(100vh - 60px); /* 减去头部高度 */
+    padding: 4px 8px;
+    font-size: 10px;
+    height: calc(100vh - 50px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-/* 页面标题 - 更紧凑 */
+/* 页面标题 - 极致紧凑 */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin-bottom: 2px;
+    padding-bottom: 4px;
     border-bottom: 1px solid var(--border-color, #2d3142);
     flex-shrink: 0;
+    min-height: 32px;
 }
 
 .page-header h1 {
-    font-size: 14px;
+    font-size: 10px;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 3px;
 }
 
 .page-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 10px;
 }
 
 .last-update {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-muted, #64748b);
 }
 
@@ -63,7 +64,7 @@
 .refresh-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     padding: 4px 8px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
@@ -83,7 +84,7 @@
 .fetch-news-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     padding: 3px 10px;
     background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
     border: 1px solid #ffed4e;
@@ -114,7 +115,7 @@
 }
 
 .fetch-news-btn i {
-    font-size: 11px;
+    font-size: 10px;
     color: #1a1a2e;
 }
 
@@ -128,71 +129,94 @@
     filter: grayscale(0.3);
 }
 
-/* ========== 主网格布局 - TradingView风格 ========== */
+/* ========== 主网格布局 - 一屏展示优化 ========== */
 .overview-grid {
     display: grid;
-    grid-template-columns: 260px minmax(500px, 1fr) 240px;
-    grid-template-rows: 2fr 1fr;
-    gap: 8px;
+    grid-template-columns: 20% 50% 30%;
+    grid-template-rows: 68% 32%;
+    gap: 4px;
     flex: 1;
     min-height: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
-/* 货币大盘占两行 - 缩小宽度 */
-.crypto-card {
-    grid-row: span 2;
-    grid-column: 2;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-/* 左侧新闻区域 */
+/* 左侧新闻区域 - 第一行 */
 .news-card {
-    grid-row: span 2;
+    grid-row: 1;
     grid-column: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
-/* 右侧智能钱包 */
-.wallet-card {
-    grid-column: 3;
-}
-
-/* 右侧AI预测 */
-.ai-predict-card {
-    grid-column: 3;
-}
-
-/* 底部土狗和板块 */
+/* 左下：热点土狗 */
 .meme-card {
+    grid-row: 2;
     grid-column: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
+/* 中间BTC大盘 - 第一行 */
+.crypto-card {
+    grid-row: 1;
+    grid-column: 2;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 中下：板块追踪 */
 .sector-card {
+    grid-row: 2;
+    grid-column: 2;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 右侧智能钱包 - 第一行 */
+.wallet-card {
+    grid-row: 1;
     grid-column: 3;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 右下：AI预测 */
+.ai-predict-card {
+    grid-row: 2;
+    grid-column: 3;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* 卡片基础样式 - 更紧凑 */
 .card {
     background: var(--card-background, #1a1d29);
     border: 1px solid var(--border-color, #2d3142);
-    border-radius: 8px;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .card-header {
-    padding: 6px 10px;
+    padding: 3px 6px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    min-height: 24px;
+}
+
+.card-header h2 {
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0;
 }
 
 .card-body {
-    padding: 8px;
+    padding: 4px 6px;
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -216,11 +240,11 @@
 .section-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
 }
 
 .section-title h2 {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     margin: 0;
 }
@@ -232,7 +256,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .icon-news { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -245,13 +269,13 @@
 .news-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
 .news-item {
-    padding: 6px 8px;
+    padding: 3px 5px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 6px;
+    border-radius: 4px;
     border-left: 2px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s;
@@ -266,7 +290,7 @@
 .news-item.neutral { border-left-color: #64748b; }
 
 .news-title {
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.3;
     margin-bottom: 3px;
     display: -webkit-box;
@@ -278,7 +302,7 @@
 .news-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     font-size: 9px;
     color: var(--text-muted);
 }
@@ -296,7 +320,7 @@
 /* 关键词标签 */
 .news-keywords {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     margin-top: 4px;
     flex-wrap: wrap;
 }
@@ -314,7 +338,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
 }
 
 .btc-price {
@@ -328,7 +352,7 @@
 .btc-change {
     padding: 2px 8px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
 }
 
@@ -382,7 +406,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 6px 10px;
+    padding: 4px 8px;
     background: rgba(255, 255, 255, 0.02);
     border-bottom: 1px solid var(--border-color);
     font-size: 10px;
@@ -391,7 +415,7 @@
 .news-stats-bar .stat-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     color: var(--text-muted);
 }
 
@@ -403,23 +427,23 @@
     color: #ef4444;
 }
 
-/* ========== TradingView 风格图表 ========== */
+/* ========== TradingView 风格图表 - 紧凑版 ========== */
 .tv-time-selector {
     display: flex;
-    gap: 2px;
+    gap: 1px;
     background: rgba(0, 0, 0, 0.3);
-    padding: 2px;
-    border-radius: 4px;
+    padding: 1px;
+    border-radius: 3px;
 }
 
 .tv-time-btn {
-    padding: 3px 8px;
+    padding: 2px 5px;
     border: none;
     background: transparent;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 9px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 2px;
     transition: all 0.2s;
 }
 
@@ -447,9 +471,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: 4px 8px;
     background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--border-color);
+    min-height: 36px;
 }
 
 .tv-price-section {
@@ -459,7 +484,7 @@
 }
 
 .tv-main-price {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
     font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -484,23 +509,23 @@
 
 .tv-indicators {
     display: flex;
-    gap: 16px;
+    gap: 10px;
 }
 
 .tv-indicator-item {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 2px;
+    gap: 1px;
 }
 
 .tv-indicator-label {
-    font-size: 9px;
+    font-size: 8px;
     color: var(--text-muted);
 }
 
 .tv-indicator-value {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-primary);
     font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -524,28 +549,28 @@
 }
 
 .tv-chart {
-    flex: 3;
+    flex: 4;
     min-height: 0;
 }
 
 .tv-volume-chart {
-    flex: 0.8;
-    min-height: 50px;
-    max-height: 80px;
+    flex: 1;
+    min-height: 35px;
+    max-height: 50px;
     border-top: 1px solid var(--border-color);
 }
 
 .tv-macd-chart {
-    flex: 0.8;
-    min-height: 50px;
-    max-height: 80px;
+    flex: 1;
+    min-height: 35px;
+    max-height: 50px;
     border-top: 1px solid var(--border-color);
 }
 
 .tv-kdj-chart {
-    flex: 0.8;
-    min-height: 50px;
-    max-height: 80px;
+    flex: 1;
+    min-height: 35px;
+    max-height: 50px;
     border-top: 1px solid var(--border-color);
 }
 
@@ -563,7 +588,7 @@
 
 .prediction-item {
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 10px;
     border-left: 3px solid var(--border-color);
 }
@@ -587,11 +612,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
 }
 
 .prediction-time {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -621,8 +646,8 @@
 .prediction-confidence {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 3px;
+    margin-bottom: 3px;
 }
 
 .confidence-label {
@@ -683,16 +708,16 @@
 .meme-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .meme-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
     padding: 5px 8px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -723,7 +748,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .meme-info {
@@ -732,7 +757,7 @@
 
 .meme-name {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .meme-symbol {
@@ -746,7 +771,7 @@
 
 .meme-price {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .meme-change {
@@ -760,13 +785,13 @@
 .sector-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 3px;
 }
 
 .sector-item {
-    padding: 8px;
+    padding: 4px 6px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid transparent;
@@ -781,24 +806,24 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .sector-name {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .sector-change {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .sector-bar {
     height: 3px;
     background: var(--border-color);
     border-radius: 2px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     overflow: hidden;
 }
 
@@ -821,7 +846,7 @@
 /* ========== 聪明钱包 - 紧凑卡片 ========== */
 .wallet-form {
     display: flex;
-    gap: 6px;
+    gap: 3px;
     margin-bottom: 8px;
 }
 
@@ -845,20 +870,20 @@
     border: none;
     border-radius: 4px;
     color: #000;
-    font-size: 11px;
+    font-size: 10px;
     cursor: pointer;
 }
 
 .wallet-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
 .wallet-item {
-    padding: 8px;
+    padding: 4px 6px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -871,7 +896,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .wallet-tag {
@@ -883,21 +908,21 @@
 }
 
 .wallet-profit {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
 }
 
 .wallet-value {
     font-size: 14px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .wallet-address {
     font-family: monospace;
     font-size: 9px;
     color: var(--text-muted);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .wallet-stats {
@@ -966,14 +991,14 @@
     border: none;
     border-bottom: 2px solid transparent;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 3px;
 }
 
 .news-tab:hover {
@@ -1133,7 +1158,7 @@
             </div>
             
             <!-- 提示信息 -->
-            <div style="padding: 6px 12px; background: rgba(29, 161, 242, 0.1); border-bottom: 1px solid var(--border-color); font-size: 11px; color: var(--text-muted);">
+            <div style="padding: 6px 12px; background: rgba(29, 161, 242, 0.1); border-bottom: 1px solid var(--border-color); font-size: 10px; color: var(--text-muted);">
                 <i class="bi bi-info-circle" style="color: #1da1f2; margin-right: 4px;"></i>
                 点击任意推文卡片可跳转查看原帖，辅助人工二次分析（标记"测试"的为模拟数据）
             </div>
@@ -1272,7 +1297,7 @@
                 <div class="ai-prediction-container" id="aiPredictionContainer">
                     <div class="empty-state" style="padding: 20px;">
                         <i class="ti ti-brain" style="font-size: 32px; color: var(--primary-color);"></i>
-                        <div style="font-size: 11px; margin-top: 8px; color: var(--text-muted);">点击"分析"获取AI预测</div>
+                        <div style="font-size: 10px; margin-top: 8px; color: var(--text-muted);">点击"分析"获取AI预测</div>
                     </div>
                 </div>
             </div>
@@ -1303,18 +1328,18 @@
         </div>
 
         <!-- 左下：热点土狗 -->
-        <div class="card">
+        <div class="card meme-card">
             <div class="card-header">
                 <div class="section-title">
                     <span class="section-icon icon-meme"><i class="ti ti-flame"></i></span>
                     <h2>热点土狗</h2>
                 </div>
-                <div style="display: flex; gap: 4px;">
-                    <a href="https://gmgn.ai/" target="_blank" class="refresh-btn" style="padding: 2px 6px;">
-                        <i class="ti ti-external-link" style="font-size: 10px;"></i>
+                <div style="display: flex; gap: 3px;">
+                    <a href="https://gmgn.ai/" target="_blank" class="refresh-btn" style="padding: 1px 4px;">
+                        <i class="ti ti-external-link" style="font-size: 9px;"></i>
                     </a>
-                    <button class="refresh-btn" onclick="refreshMemeCoins()" style="padding: 2px 6px;">
-                        <i class="ti ti-refresh" style="font-size: 10px;"></i>
+                    <button class="refresh-btn" onclick="refreshMemeCoins()" style="padding: 1px 4px;">
+                        <i class="ti ti-refresh" style="font-size: 9px;"></i>
                     </button>
                 </div>
             </div>
@@ -1325,15 +1350,15 @@
             </div>
         </div>
 
-        <!-- 右下：板块追踪 -->
-        <div class="card">
+        <!-- 中下：板块追踪 -->
+        <div class="card sector-card">
             <div class="card-header">
                 <div class="section-title">
                     <span class="section-icon icon-sector"><i class="ti ti-chart-bar"></i></span>
                     <h2>板块追踪</h2>
                 </div>
-                <button class="refresh-btn" onclick="refreshSectors()" style="padding: 2px 6px;">
-                    <i class="ti ti-refresh" style="font-size: 10px;"></i>
+                <button class="refresh-btn" onclick="refreshSectors()" style="padding: 1px 4px;">
+                    <i class="ti ti-refresh" style="font-size: 9px;"></i>
                 </button>
             </div>
             <div class="card-body" id="sectorContainer">
@@ -1342,6 +1367,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- 右下：占位符 -->
     </div>
 </div>
 
@@ -1571,7 +1598,7 @@ function showNotification(message, type = 'info') {
         top: 20px;
         right: 20px;
         padding: 12px 20px;
-        border-radius: 8px;
+        border-radius: 4px;
         font-size: 13px;
         z-index: 9999;
         max-width: 300px;
@@ -1775,9 +1802,9 @@ function renderTwitterPosts(posts) {
                  onmouseout="this.style.background=''"
                  title="${titleText}">
                 <!-- 头部：用户和时间 -->
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 3px; margin-bottom: 3px;">
                     <i class="bi bi-twitter" style="color: #1da1f2;"></i>
-                    <span style="font-weight: 600; font-size: 12px;">@${post.username}</span>
+                    <span style="font-weight: 600; font-size: 10px;">@${post.username}</span>
                     <span style="color: var(--text-muted); font-size: 10px;">${displayName}</span>
                     ${isTestData ? `<span style="font-size: 9px; padding: 1px 6px; background: rgba(255,215,0,0.2); color: var(--primary-color); border-radius: 4px;">测试</span>` : ''}
                     <span style="margin-left: auto; color: var(--text-muted); font-size: 9px;">${timeStr}</span>
@@ -1785,20 +1812,20 @@ function renderTwitterPosts(posts) {
                 </div>
                 
                 <!-- AI总结（核心展示） -->
-                <div style="background: rgba(255,255,255,0.03); border-radius: 6px; padding: 8px; margin-bottom: 6px;">
-                    <div style="font-size: 11px; line-height: 1.6; color: var(--text-primary);">
+                <div style="background: rgba(255,255,255,0.03); border-radius: 4px; padding: 8px; margin-bottom: 3px;">
+                    <div style="font-size: 10px; line-height: 1.6; color: var(--text-primary);">
                         <i class="bi bi-robot" style="color: var(--primary-color); margin-right: 4px;"></i>
                         ${summary}
                     </div>
                 </div>
                 
                 <!-- 原始内容（折叠） -->
-                <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid var(--border-color);">
+                <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-bottom: 3px; padding-left: 8px; border-left: 2px solid var(--border-color);">
                     原文: ${post.content}
                 </div>
                 
                 <!-- 底部：情绪标签和分析原因 -->
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
                     <span class="news-badge ${sentimentClass}" style="font-size: 10px; padding: 2px 8px;">
                         ${sentimentIcon} ${sentimentLabel}
                     </span>
@@ -2055,8 +2082,8 @@ function initBTCChart() {
                     if (!candle) return '';
                     const data = candle.data;
                     return `
-                        <div style="font-size: 11px;">
-                            <div style="color: #888; margin-bottom: 4px;">${candle.name}</div>
+                        <div style="font-size: 10px;">
+                            <div style="color: #888; margin-bottom: 2px;">${candle.name}</div>
                             <div>开: <span style="color: ${data[1] >= data[0] ? '#00d084' : '#ef4444'}">${data[0].toFixed(2)}</span></div>
                             <div>收: <span style="color: ${data[1] >= data[0] ? '#00d084' : '#ef4444'}">${data[1].toFixed(2)}</span></div>
                             <div>高: ${data[3].toFixed(2)}</div>
@@ -2335,11 +2362,11 @@ function showNewsDetail(id) {
     document.getElementById('modalTitle').innerHTML = '<i class="ti ti-news"></i> 新闻详情';
     document.getElementById('modalBody').innerHTML = `
         <h4 style="margin-bottom: 12px; line-height: 1.5;">${n.title}</h4>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <div style="display: flex; gap: 4px; margin-bottom: 12px;">
             <span class="news-badge ${n.sentiment > 0.2 ? 'positive' : n.sentiment < -0.2 ? 'negative' : 'neutral'}">${n.label}</span>
-            <span style="font-size: 11px; color: var(--text-muted);">${n.source} · ${n.time}</span>
+            <span style="font-size: 10px; color: var(--text-muted);">${n.source} · ${n.time}</span>
         </div>
-        <p style="color: var(--text-secondary); line-height: 1.8; font-size: 12px;">
+        <p style="color: var(--text-secondary); line-height: 1.8; font-size: 10px;">
             这是一条测试新闻内容。在实际应用中，这里会显示完整的新闻正文和相关分析数据。
         </p>
     `;
@@ -2361,11 +2388,11 @@ function showMemeDetail(id) {
             </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">市值</div>
                 <div style="font-weight: 600; font-size: 13px;">$${(Math.random()*10+1).toFixed(2)}B</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">24h成交量</div>
                 <div style="font-weight: 600; font-size: 13px;">$${(Math.random()*500+50).toFixed(0)}M</div>
             </div>
@@ -2380,24 +2407,24 @@ function showWalletDetail(id) {
     const cls = w.profit24h >= 0 ? 'positive' : 'negative';
     document.getElementById('modalTitle').innerHTML = '<i class="ti ti-wallet"></i> ' + w.tag;
     document.getElementById('modalBody').innerHTML = `
-        <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">地址</div>
-            <div style="font-family: monospace; font-size: 11px; word-break: break-all;">${w.address}</div>
+        <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 2px;">地址</div>
+            <div style="font-family: monospace; font-size: 10px; word-break: break-all;">${w.address}</div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">总资产</div>
                 <div style="font-size: 18px; font-weight: 700;">${formatPrice(w.value)}</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">胜率</div>
                 <div style="font-size: 18px; font-weight: 700; color: #00d084;">${w.winRate}%</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">24h收益</div>
                 <div style="font-size: 14px; font-weight: 600;" class="${cls}">${w.profit24h >= 0 ? '+' : ''}${w.profit24h.toFixed(2)}%</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">24h交易</div>
                 <div style="font-size: 14px; font-weight: 600;">${w.trades}笔</div>
             </div>
@@ -2413,24 +2440,24 @@ function showSectorDetail(id) {
     document.getElementById('modalTitle').innerHTML = '<i class="ti ti-chart-bar"></i> ' + s.name;
     document.getElementById('modalBody').innerHTML = `
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">今日涨跌</div>
                 <div style="font-size: 20px; font-weight: 700;" class="${cls}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">成分股</div>
                 <div style="font-size: 20px; font-weight: 700;">${s.stocks}</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">5日涨跌</div>
                 <div style="font-size: 14px; font-weight: 600;" class="${s.change5d >= 0 ? 'positive' : 'negative'}">${s.change5d >= 0 ? '+' : ''}${s.change5d.toFixed(2)}%</div>
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">成交量</div>
                 <div style="font-size: 14px; font-weight: 600;">${(Math.random()*100+50).toFixed(1)}亿</div>
             </div>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); text-align: center;">点击成分股查看详细信息</div>
+        <div style="font-size: 10px; color: var(--text-muted); text-align: center;">点击成分股查看详细信息</div>
     `;
     document.getElementById('detailModal').classList.add('active');
 }
@@ -2475,7 +2502,7 @@ function getAIPrediction() {
     container.innerHTML = `
         <div class="ai-loading">
             <i class="ti ti-brain"></i>
-            <div style="font-size: 11px; color: var(--text-muted);">AI正在分析市场数据...</div>
+            <div style="font-size: 10px; color: var(--text-muted);">AI正在分析市场数据...</div>
         </div>
     `;
     btn.disabled = true;
@@ -2494,7 +2521,7 @@ function getAIPrediction() {
             container.innerHTML = `
                 <div class="empty-state" style="padding: 20px;">
                     <i class="ti ti-alert-circle" style="font-size: 24px; color: #ef4444;"></i>
-                    <div style="font-size: 11px; margin-top: 8px; color: var(--text-muted);">分析失败: ${data.error || '未知错误'}</div>
+                    <div style="font-size: 10px; margin-top: 8px; color: var(--text-muted);">分析失败: ${data.error || '未知错误'}</div>
                 </div>
             `;
         }
