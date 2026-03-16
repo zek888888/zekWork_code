@@ -6,6 +6,7 @@ import pandas as pd
 import json
 from datetime import datetime, timedelta
 import os
+import sys
 
 app = Flask(__name__)
 app.secret_key = 'quant-trading-secret-key-2024'
@@ -1424,138 +1425,323 @@ def binance_data_api(symbol):
         }), 500
 
 
+def get_klines_for_ai(symbol: str, interval: str, limit: int = 20):
+    """获取用于AI分析的K线数据（详细版）"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT timestamp, open, high, low, close, volume,
+                   macd, macd_signal, macd_hist,
+                   kdj_k, kdj_d, kdj_j
+            FROM kline_data
+            WHERE symbol = ? AND interval = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (symbol, interval, limit))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if not rows or len(rows) < 10:
+            return None
+        
+        # 转换为列表（从旧到新）
+        klines_data = []
+        for row in reversed(rows):
+            klines_data.append({
+                'timestamp': row['timestamp'],
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close']),
+                'volume': float(row['volume']),
+                'macd': float(row['macd']) if row['macd'] else 0,
+                'macd_signal': float(row['macd_signal']) if row['macd_signal'] else 0,
+                'macd_hist': float(row['macd_hist']) if row['macd_hist'] else 0,
+                'kdj_k': float(row['kdj_k']) if row['kdj_k'] else 50,
+                'kdj_d': float(row['kdj_d']) if row['kdj_d'] else 50,
+                'kdj_j': float(row['kdj_j']) if row['kdj_j'] else 50
+            })
+        
+        return klines_data
+    except Exception as e:
+        print(f"获取AI分析K线数据失败: {e}")
+        return None
+
+def build_klines_prompt(klines_data: list, interval: str, symbol: str) -> str:
+    """构建包含K线数据的AI分析Prompt"""
+    
+    # 格式化K线数据为表格形式
+    klines_table = []
+    for i, k in enumerate(klines_data):
+        klines_table.append(
+            f"{i+1:2d}. {k['timestamp']} | "
+            f"开:{k['open']:>10.2f} 收:{k['close']:>10.2f} "
+            f"高:{k['high']:>10.2f} 低:{k['low']:>10.2f} | "
+            f"量:{k['volume']:>15.2f} | "
+            f"MACD:{k['macd_hist']:>8.4f} | "
+            f"KDJ-K:{k['kdj_k']:>6.2f} D:{k['kdj_d']:>6.2f} J:{k['kdj_j']:>6.2f}"
+        )
+    
+    # 计算一些统计数据
+    latest = klines_data[-1]
+    prev = klines_data[-2] if len(klines_data) > 1 else latest
+    
+    price_change = (latest['close'] - prev['close']) / prev['close'] * 100
+    volume_avg = sum(k['volume'] for k in klines_data[-5:]) / 5
+    macd_trend = "上行" if latest['macd_hist'] > klines_data[-2]['macd_hist'] else "下行"
+    kdj_status = "超买" if latest['kdj_j'] > 80 else "超卖" if latest['kdj_j'] < 20 else "中性"
+    
+    interval_cn = {
+        '5m': '5分钟',
+        '15m': '15分钟', 
+        '30m': '30分钟',
+        '1h': '1小时',
+        '4h': '4小时',
+        '12h': '12小时',
+        '1d': '日线'
+    }.get(interval, interval)
+    
+    prompt = f"""你是量化分析专家，请根据以下{symbol}的K线数据进行专业技术分析，并预测下一根{interval_cn}K线的走势。
+
+【当前价格概况】
+- 最新收盘价: ${latest['close']:,.2f}
+- 上一根涨跌幅: {price_change:+.2f}%
+- 近5根平均成交量: {volume_avg:,.2f}
+- MACD柱状图趋势: {macd_trend}
+- KDJ状态: {kdj_status} (J值: {latest['kdj_j']:.2f})
+
+【前{len(klines_data)}根{interval_cn}K线详细数据】
+序号 | 时间              | 开盘价      收盘价      最高价      最低价     | 成交量           | MACD柱    | KDJ(K/D/J)
+-----|-------------------|------------|------------|------------|------------|------------------|----------|------------
+{chr(10).join(klines_table)}
+
+【分析要求】
+1. 综合分析K线形态、成交量变化、MACD和KDJ指标
+2. 判断下一根{interval_cn}K线是涨还是跌
+3. 给出涨的概率百分比（如0-100%）
+4. 给出跌的概率百分比（如0-100%）
+5. 简要说明分析理由（20-30字）
+
+请以JSON格式返回：
+{{
+    "prediction": "up" 或 "down",
+    "up_probability": 65,
+    "down_probability": 35,
+    "confidence": 0.7,
+    "reason": "基于MACD金叉和量价配合分析，预计上行"
+}}
+"""
+    return prompt
+
 # ========== AI预测分析API ==========
 @app.route('/api/crypto/predict', methods=['POST'])
 @login_required
 def crypto_predict_api():
-    """使用AI分析预测加密货币价格走势"""
+    """使用多个AI分析预测加密货币价格走势（基于数据库K线数据）"""
     try:
         data = request.get_json()
         symbol = data.get('symbol', 'BTCUSDT')
+        interval = data.get('interval', '15m')
         
-        # 获取币安数据作为分析依据
-        ticker = get_binance_ticker(symbol)
-        klines = get_binance_klines(symbol, '15m', 50)
+        # 格式化symbol
+        symbol = symbol.upper()
+        if not symbol.endswith('USDT'):
+            symbol += 'USDT'
         
-        if not ticker or not klines:
+        # 从数据库获取前20根K线数据
+        klines_data = get_klines_for_ai(symbol, interval, 20)
+        
+        if not klines_data:
             return jsonify({
                 'success': False,
-                'error': '无法获取市场数据'
+                'error': f'无法获取{interval}维度的历史K线数据，请先同步数据'
             }), 400
         
-        # 计算技术指标
-        closes = [c[1] for c in klines['candles']]
-        volumes = klines['volumes']
+        # 获取实时价格
+        ticker = get_binance_ticker(symbol)
+        current_price = ticker['price'] if ticker else klines_data[-1]['close']
         
-        # 计算近期趋势
-        recent_closes = closes[-20:]
-        price_change_1h = (recent_closes[-1] - recent_closes[-4]) / recent_closes[-4] * 100 if len(recent_closes) >= 4 else 0
-        price_change_24h = ticker['change']
+        # 构建AI分析Prompt
+        analysis_prompt = build_klines_prompt(klines_data, interval, symbol)
         
-        # 计算成交量变化
-        recent_volume = sum(volumes[-5:]) / 5
-        prev_volume = sum(volumes[-10:-5]) / 5 if len(volumes) >= 10 else recent_volume
-        volume_change = (recent_volume - prev_volume) / prev_volume * 100 if prev_volume > 0 else 0
+        # 调用所有激活的AI配置进行分析
+        sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
+        from ai_config_manager import AIConfigManager
         
-        # 构建AI分析提示词
-        analysis_prompt = f"""你是一个专业的加密货币分析师。请根据以下数据对{symbol}进行技术分析并预测短期走势：
-
-【当前市场数据】
-- 当前价格: ${ticker['price']:,.2f}
-- 24h涨跌幅: {price_change_24h:+.2f}%
-- 1h涨跌幅: {price_change_1h:+.2f}%
-- 24h最高: ${ticker['high']:,.2f}
-- 24h最低: ${ticker['low']:,.2f}
-- 成交量变化: {volume_change:+.2f}%
-
-【技术指标分析】
-- 最新MACD柱状值: {klines['macdHist'][-1]:.2f}
-- 价格位于24h区间位置: {(ticker['price'] - ticker['low']) / (ticker['high'] - ticker['low']) * 100:.1f}%
-
-请分析并预测：
-1. 未来15分钟价格走势 (看涨/看跌/中性)
-2. 未来1小时价格走势 (看涨/看跌/中性)
-3. 给出置信度(0-1)和分析理由
-
-请以JSON格式返回：
-{{
-    "predictions": [
-        {{"timeframe": "15分钟后", "prediction": "bullish/bearish/neutral", "confidence": 0.75, "reason": "..."}},
-        {{"timeframe": "1小时后", "prediction": "bullish/bearish/neutral", "confidence": 0.65, "reason": "..."}}
-    ]
-}}
-"""
+        manager = AIConfigManager()
+        active_configs = manager.get_active_configs()
         
-        # 调用AI配置进行分析
-        try:
-            sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
-            from ai_config_manager import AIConfigManager
+        if not active_configs:
+            # 没有AI配置，使用模拟数据
+            return generate_mock_predictions(symbol, interval, current_price, klines_data)
+        
+        # 并行调用所有活跃的AI配置
+        ai_predictions = []
+        
+        for ai_config in active_configs:
+            try:
+                # 根据不同提供商调用API
+                if ai_config.provider == 'deepseek':
+                    result = call_deepseek_api_v2(ai_config, analysis_prompt)
+                elif ai_config.provider == 'moonshot':
+                    result = call_moonshot_api_v2(ai_config, analysis_prompt)
+                else:
+                    result = call_openai_compatible_api_v2(ai_config, analysis_prompt)
+                
+                # 添加AI标识信息
+                result['ai_name'] = ai_config.name
+                result['ai_provider'] = ai_config.provider
+                result['ai_model'] = ai_config.model
+                result['timestamp'] = datetime.now().isoformat()
+                result['source'] = 'ai'
+                ai_predictions.append(result)
+                
+            except Exception as e:
+                print(f"AI {ai_config.name} 调用失败: {e}")
+                # 记录失败信息
+                ai_predictions.append({
+                    'ai_name': ai_config.name,
+                    'ai_provider': ai_config.provider,
+                    'ai_model': ai_config.model,
+                    'prediction': 'unknown',
+                    'up_probability': 50,
+                    'down_probability': 50,
+                    'confidence': 0,
+                    'reason': f'调用失败: {str(e)[:30]}',
+                    'timestamp': datetime.now().isoformat(),
+                    'source': 'error'
+                })
+        
+        # 如果所有AI都失败，使用模拟数据
+        if not ai_predictions or all(p.get('source') == 'error' for p in ai_predictions):
+            return generate_mock_predictions(symbol, interval, current_price, klines_data)
+        
+        # 计算综合预测（基于所有AI结果的加权平均）
+        valid_predictions = [p for p in ai_predictions if p.get('source') != 'error']
+        
+        if valid_predictions:
+            avg_up_prob = sum(p['up_probability'] for p in valid_predictions) / len(valid_predictions)
+            avg_confidence = sum(p.get('confidence', 0.5) for p in valid_predictions) / len(valid_predictions)
             
-            manager = AIConfigManager()
-            active_configs = manager.get_active_configs()
+            # 多数AI的判断作为综合结果
+            up_count = sum(1 for p in valid_predictions if p['prediction'] == 'up')
+            down_count = len(valid_predictions) - up_count
             
-            if not active_configs:
-                # 没有AI配置，使用模拟数据
-                raise Exception("无可用AI配置")
-            
-            # 使用第一个活跃的AI配置进行分析
-            ai_config = active_configs[0]
-            
-            # 根据不同提供商调用API
-            if ai_config.provider == 'deepseek':
-                predictions = call_deepseek_api(ai_config, analysis_prompt)
-            elif ai_config.provider == 'moonshot':
-                predictions = call_moonshot_api(ai_config, analysis_prompt)
-            else:
-                # 其他提供商使用通用OpenAI格式
-                predictions = call_openai_compatible_api(ai_config, analysis_prompt)
-            
-            return jsonify({
-                'success': True,
+            consensus_prediction = 'up' if up_count > down_count else 'down' if down_count > up_count else 'neutral'
+            consensus_reason = f"共{len(valid_predictions)}个AI分析: {up_count}看涨, {down_count}看跌"
+        else:
+            avg_up_prob = 50
+            avg_confidence = 0.5
+            consensus_prediction = 'neutral'
+            consensus_reason = '无效的AI预测结果'
+        
+        return jsonify({
+            'success': True,
+            'data': {
                 'symbol': symbol,
-                'predictions': predictions,
+                'interval': interval,
+                'current_price': current_price,
+                'prediction': consensus_prediction,
+                'up_probability': round(avg_up_prob),
+                'down_probability': round(100 - avg_up_prob),
+                'confidence': round(avg_confidence, 2),
+                'reason': consensus_reason,
                 'timestamp': datetime.now().isoformat(),
-                'ai_provider': ai_config.provider,
-                'ai_model': ai_config.model
-            })
-            
-        except Exception as ai_error:
-            print(f"AI调用失败，使用模拟数据: {ai_error}")
-            # 使用模拟数据作为后备
-            import random
-            
-            # 根据技术指标生成合理的预测
-            macd_trend = klines['macdHist'][-1] > klines['macdHist'][-5] if len(klines['macdHist']) >= 5 else True
-            price_above_mid = ticker['price'] > (ticker['high'] + ticker['low']) / 2
-            
-            predictions = [
-                {
-                    'timeframe': '15分钟后',
-                    'prediction': 'bullish' if macd_trend else 'bearish',
-                    'confidence': 0.65 + random.uniform(0, 0.25),
-                    'reason': f"技术面显示MACD呈现{'上行' if macd_trend else '下行'}趋势，当前价格位于24h区间{'上半区' if price_above_mid else '下半区'}，预计短期{'小幅上涨' if macd_trend else '小幅回调'}。"
-                },
-                {
-                    'timeframe': '1小时后',
-                    'prediction': 'neutral' if abs(price_change_24h) < 1 else ('bullish' if price_change_24h < -2 else 'bearish'),
-                    'confidence': 0.55 + random.uniform(0, 0.20),
-                    'reason': f"综合24h涨跌幅{price_change_24h:+.2f}%和当前市场情绪，建议{'持续观察' if abs(price_change_24h) < 2 else '注意回调风险'}，等待更明确信号。"
+                'source': 'ensemble',
+                'ai_count': len(valid_predictions),
+                'ai_predictions': ai_predictions,  # 每个AI的详细预测
+                'indicators': {
+                    'macd_hist': round(klines_data[-1]['macd_hist'], 4),
+                    'kdj_j': round(klines_data[-1]['kdj_j'], 2)
                 }
-            ]
-            
-            return jsonify({
-                'success': True,
-                'symbol': symbol,
-                'predictions': predictions,
-                'timestamp': datetime.now().isoformat(),
-                'source': 'mock'
-            })
+            }
+        })
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
+
+
+def generate_mock_predictions(symbol, interval, current_price, klines_data):
+    """生成模拟预测数据（当无可用AI时）"""
+    import random
+    
+    latest = klines_data[-1]
+    macd_hist = latest['macd_hist']
+    kdj_j = latest['kdj_j']
+    
+    # 基于技术指标生成合理的模拟预测
+    if macd_hist > 0 and kdj_j < 80:
+        base_up_prob = 65
+        reason = "MACD柱状图为正，KDJ未超买，短期看涨"
+    elif macd_hist < 0 and kdj_j > 20:
+        base_up_prob = 35
+        reason = "MACD柱状图为负，短期调整压力较大"
+    else:
+        base_up_prob = 50
+        reason = "指标信号不明确，建议观望"
+    
+    # 模拟多个AI的预测
+    mock_ais = [
+        {'name': 'Kimi', 'provider': 'moonshot', 'model': 'kimi-latest'},
+        {'name': 'DeepSeek', 'provider': 'deepseek', 'model': 'deepseek-reasoner'},
+        {'name': 'GPT-4o', 'provider': 'openai', 'model': 'gpt-4o'}
+    ]
+    
+    ai_predictions = []
+    for ai in mock_ais:
+        # 每个AI略有不同的判断
+        variation = random.randint(-10, 10)
+        up_prob = max(10, min(90, base_up_prob + variation))
+        prediction = 'up' if up_prob > 50 else 'down'
+        
+        ai_predictions.append({
+            'ai_name': ai['name'],
+            'ai_provider': ai['provider'],
+            'ai_model': ai['model'],
+            'prediction': prediction,
+            'up_probability': up_prob,
+            'down_probability': 100 - up_prob,
+            'confidence': round(random.uniform(0.6, 0.85), 2),
+            'reason': reason if prediction == ('up' if base_up_prob > 50 else 'down') else f"与{mock_ais[0]['name']}观点不同，倾向反方向",
+            'timestamp': datetime.now().isoformat(),
+            'source': 'mock'
+        })
+    
+    # 计算综合预测
+    avg_up_prob = sum(p['up_probability'] for p in ai_predictions) / len(ai_predictions)
+    up_count = sum(1 for p in ai_predictions if p['prediction'] == 'up')
+    down_count = len(ai_predictions) - up_count
+    consensus_prediction = 'up' if up_count > down_count else 'down'
+    
+    return jsonify({
+        'success': True,
+        'data': {
+            'symbol': symbol,
+            'interval': interval,
+            'current_price': current_price,
+            'prediction': consensus_prediction,
+            'up_probability': round(avg_up_prob),
+            'down_probability': round(100 - avg_up_prob),
+            'confidence': round(random.uniform(0.6, 0.8), 2),
+            'reason': f"模拟分析: {up_count}看涨, {down_count}看跌 | {reason}",
+            'timestamp': datetime.now().isoformat(),
+            'source': 'mock',
+            'ai_count': len(ai_predictions),
+            'ai_predictions': ai_predictions,
+            'indicators': {
+                'macd_hist': round(macd_hist, 4),
+                'kdj_j': round(kdj_j, 2)
+            }
+        }
+    })
 
 def call_deepseek_api(config, prompt):
     """调用DeepSeek API"""
@@ -1670,6 +1856,138 @@ def call_openai_compatible_api(config, prompt):
         predictions_data = json.loads(json_match.group())
         return predictions_data.get('predictions', [])
     return []
+
+# ========== 新版AI预测API调用（返回结构化数据）==========
+def parse_ai_prediction_response(content: str) -> dict:
+    """解析AI返回的预测结果（支持Markdown代码块）"""
+    import json
+    import re
+    
+    try:
+        # 先尝试解析整个内容
+        content = content.strip()
+        
+        # 处理Markdown代码块 ```json ... ```
+        code_block_match = re.search(r'```(?:json)?\s*\n?([\s\S]*?)\n?```', content)
+        if code_block_match:
+            content = code_block_match.group(1).strip()
+        
+        # 提取JSON部分
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if json_match:
+            data = json.loads(json_match.group())
+            return {
+                'prediction': data.get('prediction', 'unknown'),
+                'up_probability': data.get('up_probability', 50),
+                'down_probability': data.get('down_probability', 50),
+                'confidence': data.get('confidence', 0.5),
+                'reason': data.get('reason', '暂无分析')
+            }
+    except Exception as e:
+        print(f"解析AI响应失败: {e}, 内容: {content[:100]}")
+    
+    # 默认返回
+    return {
+        'prediction': 'unknown',
+        'up_probability': 50,
+        'down_probability': 50,
+        'confidence': 0.5,
+        'reason': '解析失败'
+    }
+
+def call_deepseek_api_v2(config, prompt):
+    """调用DeepSeek API（新版，返回结构化预测数据）"""
+    import requests
+    
+    headers = {
+        'Authorization': f'Bearer {config.api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'model': config.model,
+        'messages': [
+            {'role': 'system', 'content': '你是一个专业的量化分析专家，请严格按照要求的JSON格式返回结果。'},
+            {'role': 'user', 'content': prompt}
+        ],
+        'temperature': 0.3,
+        'max_tokens': 800
+    }
+    
+    response = requests.post(
+        f'{config.base_url}/chat/completions',
+        headers=headers,
+        json=data,
+        timeout=30
+    )
+    response.raise_for_status()
+    result = response.json()
+    
+    content = result['choices'][0]['message']['content']
+    return parse_ai_prediction_response(content)
+
+def call_moonshot_api_v2(config, prompt):
+    """调用Moonshot(Kimi) API（新版）"""
+    import requests
+    
+    headers = {
+        'Authorization': f'Bearer {config.api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'model': config.model,
+        'messages': [
+            {'role': 'system', 'content': '你是一个专业的量化分析专家，请严格按照要求的JSON格式返回结果。'},
+            {'role': 'user', 'content': prompt}
+        ],
+        'temperature': 0.3,
+        'max_tokens': 800
+    }
+    
+    response = requests.post(
+        f'{config.base_url}/chat/completions',
+        headers=headers,
+        json=data,
+        timeout=30
+    )
+    response.raise_for_status()
+    result = response.json()
+    
+    content = result['choices'][0]['message']['content']
+    return parse_ai_prediction_response(content)
+
+def call_openai_compatible_api_v2(config, prompt):
+    """调用通用OpenAI兼容API（新版）"""
+    import requests
+    
+    headers = {
+        'Authorization': f'Bearer {config.api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'model': config.model,
+        'messages': [
+            {'role': 'system', 'content': '你是一个专业的量化分析专家，请严格按照要求的JSON格式返回结果。'},
+            {'role': 'user', 'content': prompt}
+        ],
+        'temperature': 0.3,
+        'max_tokens': 800
+    }
+    
+    base_url = config.base_url or 'https://api.openai.com/v1'
+    response = requests.post(
+        f'{base_url}/chat/completions',
+        headers=headers,
+        json=data,
+        timeout=30
+    )
+    response.raise_for_status()
+    result = response.json()
+    
+    content = result['choices'][0]['message']['content']
+    return parse_ai_prediction_response(content)
 
 # 聪明钱包相关API
 smart_wallets = []  # 内存存储，实际应使用数据库
