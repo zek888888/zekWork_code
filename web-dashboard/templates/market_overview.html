@@ -2494,6 +2494,10 @@ function refreshAllData() {
 }
 
 // ========== AI预测分析（基于K线数据）==========
+// 全局变量跟踪AI调用状态
+let aiPredictionTimer = null;
+let aiPredictionStartTime = null;
+
 function getAIPrediction(interval = '15m', autoRefresh = false) {
     const container = document.getElementById('aiPredictionContainer');
     const btn = document.getElementById('aiPredictBtn');
@@ -2509,18 +2513,78 @@ function getAIPrediction(interval = '15m', autoRefresh = false) {
         '1d': '日线'
     };
     
-    // 如果不是自动刷新，显示加载状态
-    if (!autoRefresh) {
-        container.innerHTML = `
-            <div class="ai-loading">
-                <i class="ti ti-brain"></i>
-                <div style="font-size: 9px; color: var(--text-muted);">
-                    AI正在分析${intervalMap[interval]}数据...
-                </div>
-            </div>
-        `;
-        if (btn) btn.disabled = true;
+    // 清除之前的定时器
+    if (aiPredictionTimer) {
+        clearInterval(aiPredictionTimer);
     }
+    
+    aiPredictionStartTime = Date.now();
+    
+    // 显示带倒计时的加载状态
+    container.innerHTML = `
+        <div class="ai-loading" style="padding: 15px; text-align: center;">
+            <div style="position: relative; display: inline-block; margin-bottom: 10px;">
+                <i class="ti ti-brain" style="font-size: 28px; color: var(--primary-color); animation: pulse 1.5s infinite;"></i>
+                <div style="position: absolute; top: -5px; right: -5px; width: 10px; height: 10px; background: #00d084; border-radius: 50%; animation: blink 1s infinite;"></div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">
+                <i class="ti ti-robot" style="margin-right: 4px;"></i>DeepSeek + Kimi 联合分析中
+            </div>
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 8px;">
+                正在分析 ${intervalMap[interval]} 数据...
+            </div>
+            <div id="aiCountdown" style="font-size: 16px; font-weight: 700; color: var(--primary-color); font-family: monospace;">
+                00:00
+            </div>
+            <div style="font-size: 8px; color: var(--text-muted); margin-top: 5px;">
+                已等待 <span id="aiElapsed">0</span> 秒 | 预计需时 15-30秒
+            </div>
+            <div style="margin-top: 10px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                <div id="aiProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-color), #00d084); transition: width 1s linear;"></div>
+            </div>
+        </div>
+        <style>
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.1); }
+            }
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.3; }
+            }
+        </style>
+    `;
+    
+    if (btn) btn.disabled = true;
+    
+    // 启动倒计时
+    const maxWaitTime = 60; // 最大等待60秒
+    aiPredictionTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - aiPredictionStartTime) / 1000);
+        const remaining = Math.max(0, maxWaitTime - elapsed);
+        const progress = Math.min(100, (elapsed / maxWaitTime) * 100);
+        
+        const countdownEl = document.getElementById('aiCountdown');
+        const elapsedEl = document.getElementById('aiElapsed');
+        const progressEl = document.getElementById('aiProgressBar');
+        
+        if (countdownEl) {
+            const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const secs = (remaining % 60).toString().padStart(2, '0');
+            countdownEl.textContent = `${mins}:${secs}`;
+        }
+        if (elapsedEl) {
+            elapsedEl.textContent = elapsed;
+        }
+        if (progressEl) {
+            progressEl.style.width = `${progress}%`;
+        }
+        
+        // 超时处理
+        if (elapsed >= maxWaitTime) {
+            clearInterval(aiPredictionTimer);
+        }
+    }, 1000);
     
     // 调用后端API获取AI预测（传入时间维度）
     fetch('/api/crypto/predict', {
@@ -2528,27 +2592,54 @@ function getAIPrediction(interval = '15m', autoRefresh = false) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbol: 'BTCUSDT', interval: interval })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+    })
     .then(data => {
+        // 清除定时器
+        if (aiPredictionTimer) {
+            clearInterval(aiPredictionTimer);
+            aiPredictionTimer = null;
+        }
+        
         if (data.success) {
+            const elapsed = Math.floor((Date.now() - aiPredictionStartTime) / 1000);
+            console.log(`[AI预测] 耗时 ${elapsed}秒, 来源: ${data.data?.source || 'unknown'}`);
             renderAIPrediction(data.data, interval);
         } else {
-            container.innerHTML = `
-                <div class="empty-state" style="padding: 10px;">
-                    <i class="ti ti-alert-circle" style="font-size: 18px; color: #ef4444;"></i>
-                    <div style="font-size: 9px; margin-top: 4px; color: var(--text-muted);">
-                        ${data.error || '分析失败'}
-                    </div>
-                </div>
-            `;
+            throw new Error(data.error || '分析失败');
         }
         if (btn) btn.disabled = false;
     })
     .catch(err => {
+        // 清除定时器
+        if (aiPredictionTimer) {
+            clearInterval(aiPredictionTimer);
+            aiPredictionTimer = null;
+        }
+        
         console.error('AI预测请求失败:', err);
-        // 使用模拟数据展示
-        const mockData = generateMockPrediction(interval);
-        renderAIPrediction(mockData, interval);
+        
+        // 显示错误信息，而不是直接降级到模拟数据
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 15px; text-align: center;">
+                <i class="ti ti-alert-triangle" style="font-size: 24px; color: #ef4444; margin-bottom: 8px;"></i>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">
+                    AI调用失败
+                </div>
+                <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 10px;">
+                    ${err.message || '网络请求失败'}
+                </div>
+                <button onclick="getAIPrediction('${interval}')" 
+                        style="padding: 5px 12px; font-size: 9px; background: var(--primary-color); 
+                               color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="ti ti-refresh" style="margin-right: 4px;"></i>重试
+                </button>
+            </div>
+        `;
         if (btn) btn.disabled = false;
     });
 }

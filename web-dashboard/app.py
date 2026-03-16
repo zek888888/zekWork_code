@@ -1571,18 +1571,19 @@ def crypto_predict_api():
         sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/config-layer'))
         from ai_config_manager import AIConfigManager
         
-        manager = AIConfigManager()
+        # 使用正确的数据库路径
+        manager = AIConfigManager(DATABASE_PATH)
         active_configs = manager.get_active_configs()
         
         if not active_configs:
             # 没有AI配置，使用模拟数据
             return generate_mock_predictions(symbol, interval, current_price, klines_data)
         
-        # 并行调用所有活跃的AI配置
-        ai_predictions = []
-        
-        for ai_config in active_configs:
+        # 定义AI调用函数（用于并行执行）
+        def call_single_ai(ai_config):
+            """调用单个AI并返回结果"""
             try:
+                start_time = datetime.now()
                 # 根据不同提供商调用API
                 if ai_config.provider == 'deepseek':
                     result = call_deepseek_api_v2(ai_config, analysis_prompt)
@@ -1591,18 +1592,20 @@ def crypto_predict_api():
                 else:
                     result = call_openai_compatible_api_v2(ai_config, analysis_prompt)
                 
+                elapsed = (datetime.now() - start_time).total_seconds()
+                print(f"[AI调用] {ai_config.name} 完成，耗时 {elapsed:.2f}秒")
+                
                 # 添加AI标识信息
                 result['ai_name'] = ai_config.name
                 result['ai_provider'] = ai_config.provider
                 result['ai_model'] = ai_config.model
                 result['timestamp'] = datetime.now().isoformat()
                 result['source'] = 'ai'
-                ai_predictions.append(result)
+                return result
                 
             except Exception as e:
-                print(f"AI {ai_config.name} 调用失败: {e}")
-                # 记录失败信息
-                ai_predictions.append({
+                print(f"[AI调用] {ai_config.name} 失败: {e}")
+                return {
                     'ai_name': ai_config.name,
                     'ai_provider': ai_config.provider,
                     'ai_model': ai_config.model,
@@ -1610,10 +1613,47 @@ def crypto_predict_api():
                     'up_probability': 50,
                     'down_probability': 50,
                     'confidence': 0,
-                    'reason': f'调用失败: {str(e)[:30]}',
+                    'reason': f'调用失败: {str(e)[:40]}',
                     'timestamp': datetime.now().isoformat(),
                     'source': 'error'
-                })
+                }
+        
+        # 使用ThreadPoolExecutor并行调用所有AI
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        ai_predictions = []
+        total_start = datetime.now()
+        
+        with ThreadPoolExecutor(max_workers=len(active_configs)) as executor:
+            # 提交所有任务
+            future_to_config = {
+                executor.submit(call_single_ai, config): config 
+                for config in active_configs
+            }
+            
+            # 等待所有任务完成
+            for future in as_completed(future_to_config):
+                config = future_to_config[future]
+                try:
+                    result = future.result()
+                    ai_predictions.append(result)
+                except Exception as e:
+                    print(f"[AI调用] {config.name} 异常: {e}")
+                    ai_predictions.append({
+                        'ai_name': config.name,
+                        'ai_provider': config.provider,
+                        'ai_model': config.model,
+                        'prediction': 'unknown',
+                        'up_probability': 50,
+                        'down_probability': 50,
+                        'confidence': 0,
+                        'reason': f'异常: {str(e)[:40]}',
+                        'timestamp': datetime.now().isoformat(),
+                        'source': 'error'
+                    })
+        
+        total_elapsed = (datetime.now() - total_start).total_seconds()
+        print(f"[AI预测] 所有AI调用完成，总耗时 {total_elapsed:.2f}秒")
         
         # 如果所有AI都失败，使用模拟数据
         if not ai_predictions or all(p.get('source') == 'error' for p in ai_predictions):
