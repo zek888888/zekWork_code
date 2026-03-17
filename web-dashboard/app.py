@@ -216,37 +216,8 @@ def market_data_api(symbol):
 @app.route('/signals')
 @login_required
 def signals():
-    """交易信号页面"""
-    conn = get_db_connection()
-    
-    # 获取筛选参数
-    rating_filter = request.args.get('rating', '')
-    market_filter = request.args.get('market', '')
-    
-    try:
-        query = """SELECT fs.*, rp.price as current_price
-                   FROM factor_scores fs
-                   LEFT JOIN realtime_price rp ON fs.symbol = rp.symbol
-                   WHERE 1=1"""
-        params = []
-        
-        if rating_filter:
-            query += " AND fs.strength >= ?"
-            params.append(rating_filter)
-        
-        if market_filter:
-            query += " AND fs.symbol LIKE ?"
-            params.append(f'%{market_filter}%')
-        
-        query += " ORDER BY fs.created_at DESC LIMIT 50"
-        
-        signals_data = conn.execute(query, params).fetchall()
-    except:
-        signals_data = []
-    
-    conn.close()
-    
-    return render_template('signals.html', signals=signals_data)
+    """交易信号页面 - 重定向到AI预测统计报告"""
+    return redirect(url_for('trading_signals'))
 
 @app.route('/portfolio')
 @login_required
@@ -380,6 +351,249 @@ def reports():
                          total_trades=total_trades,
                          win_rate=win_rate,
                          cumulative_pnl=json.dumps(cumulative_pnl))
+
+# ==================== AI预测统计报告模块 ====================
+
+@app.route('/trading_signals')
+@login_required
+def trading_signals():
+    """交易信号页面 - AI预测统计报告"""
+    return render_template('trading_signals.html')
+
+@app.route('/api/prediction-report')
+@login_required
+def prediction_report_api():
+    """AI预测统计报告API - 详细版"""
+    try:
+        import sqlite3
+        from datetime import datetime, timedelta
+        
+        # 获取参数
+        days = request.args.get('days', 7, type=int)
+        limit = request.args.get('limit', 50, type=int)
+        symbol = request.args.get('symbol', 'BTCUSDT')
+        interval = request.args.get('interval', '15m')
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 首先执行验证
+        cutoff_time = datetime.now() - timedelta(hours=2)
+        cursor.execute("""
+            SELECT id FROM ai_prediction_records
+            WHERE verified_at IS NULL
+            AND target_period_end < ?
+        """, (cutoff_time,))
+        
+        pending_ids = [row[0] for row in cursor.fetchall()]
+        verified_count = 0
+        
+        for record_id in pending_ids:
+            try:
+                # 获取记录详情
+                cursor.execute("""
+                    SELECT * FROM ai_prediction_records WHERE id = ?
+                """, (record_id,))
+                record = cursor.fetchone()
+                
+                if not record:
+                    continue
+                
+                target_start = record['target_period_start']
+                target_end = record['target_period_end']
+                consensus_pred = record['consensus_prediction']
+                
+                # 查询实际价格
+                cursor.execute("""
+                    SELECT close FROM kline_data
+                    WHERE symbol = ? AND interval = ?
+                    AND timestamp >= ? AND timestamp <= ?
+                    ORDER BY timestamp ASC
+                """, (symbol, interval, target_start, target_end))
+                
+                rows = cursor.fetchall()
+                if len(rows) >= 2:
+                    price_start = float(rows[0]['close'])
+                    price_end = float(rows[-1]['close'])
+                    price_change = ((price_end - price_start) / price_start) * 100
+                    
+                    # 判断实际结果
+                    if price_change > 0.1:
+                        actual_result = 'up'
+                    elif price_change < -0.1:
+                        actual_result = 'down'
+                    else:
+                        actual_result = 'flat'
+                    
+                    # 计算准确性
+                    is_correct = (consensus_pred == actual_result) if actual_result != 'flat' else None
+                    
+                    # 更新记录
+                    cursor.execute("""
+                        UPDATE ai_prediction_records SET
+                            actual_result = ?,
+                            price_at_target_start = ?,
+                            price_at_target_end = ?,
+                            actual_price_change_percent = ?,
+                            is_correct = ?,
+                            verified_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (actual_result, price_start, price_end, price_change, is_correct, record_id))
+                    
+                    # 更新AI准确性
+                    cursor.execute("""
+                        SELECT id, prediction FROM ai_individual_predictions
+                        WHERE record_id = ?
+                    """, (record_id,))
+                    
+                    for ai_row in cursor.fetchall():
+                        ai_is_correct = (ai_row['prediction'] == actual_result) if actual_result != 'flat' else None
+                        cursor.execute("""
+                            UPDATE ai_individual_predictions
+                            SET is_correct = ?
+                            WHERE id = ?
+                        """, (ai_is_correct, ai_row['id']))
+                    
+                    # 创建复盘记录
+                    review_type = 'success_analysis' if is_correct else 'failure_analysis'
+                    if is_correct:
+                        reason = "技术指标综合判断准确，MACD和KDJ信号有效"
+                    else:
+                        if abs(price_change) > 1.5:
+                            reason = "市场出现突发性大幅波动，超出技术分析范畴"
+                        else:
+                            reason = "指标信号与实际走势出现背离"
+                    
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO prediction_reviews
+                        (record_id, review_type, primary_reason, should_update_kb, reviewed_at)
+                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    """, (record_id, review_type, reason, True))
+                    
+                    verified_count += 1
+                    
+            except Exception as e:
+                print(f"验证记录 {record_id} 失败: {e}")
+        
+        conn.commit()
+        
+        # 获取详细预测记录
+        cutoff_date = datetime.now() - timedelta(days=days)
+        
+        cursor.execute("""
+            SELECT * FROM ai_prediction_records
+            WHERE symbol = ? AND interval = ?
+            AND predict_initiated_at >= ?
+            ORDER BY predict_initiated_at DESC
+            LIMIT ?
+        """, (symbol, interval, cutoff_date, limit))
+        
+        records = [dict(row) for row in cursor.fetchall()]
+        
+        # 为每条记录获取AI详情和复盘信息
+        for record in records:
+            record_id = record['id']
+            
+            # 获取AI详情
+            cursor.execute("""
+                SELECT ai_name, ai_provider, prediction, up_probability, 
+                       down_probability, confidence, reason, is_correct, response_time_ms
+                FROM ai_individual_predictions
+                WHERE record_id = ?
+            """, (record_id,))
+            
+            record['ai_details'] = [dict(row) for row in cursor.fetchall()]
+            
+            # 获取复盘信息
+            cursor.execute("""
+                SELECT review_type, primary_reason, should_update_kb
+                FROM prediction_reviews
+                WHERE record_id = ?
+            """, (record_id,))
+            
+            review = cursor.fetchone()
+            if review:
+                record['review'] = dict(review)
+        
+        # 获取统计数据
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct,
+                AVG(consensus_confidence) as avg_confidence
+            FROM ai_prediction_records
+            WHERE verified_at IS NOT NULL
+            AND predict_initiated_at >= ?
+        """, (cutoff_date,))
+        
+        overall = dict(cursor.fetchone())
+        
+        # AI统计
+        cursor.execute("""
+            SELECT 
+                ai.ai_name,
+                COUNT(*) as total,
+                SUM(CASE WHEN ai.is_correct = 1 THEN 1 ELSE 0 END) as correct
+            FROM ai_individual_predictions ai
+            JOIN ai_prediction_records r ON ai.record_id = r.id
+            WHERE ai.is_correct IS NOT NULL
+            AND r.predict_initiated_at >= ?
+            GROUP BY ai.ai_name
+        """, (cutoff_date,))
+        
+        ai_stats = []
+        for row in cursor.fetchall():
+            stat = dict(row)
+            stat['accuracy_rate'] = round((stat['correct'] / stat['total'] * 100), 1) if stat['total'] > 0 else 0
+            ai_stats.append(stat)
+        
+        conn.close()
+        
+        overall['accuracy_rate'] = round((overall['correct'] / overall['total'] * 100), 1) if overall['total'] > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'stats': {
+                    'overall': overall,
+                    'ai_stats': ai_stats
+                },
+                'predictions': records,
+                'verified_count': verified_count
+            }
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/run-prediction', methods=['POST'])
+@login_required
+def run_prediction_api():
+    """立即执行预测API"""
+    try:
+        sys.path.insert(0, os.path.expanduser('~/.openclaw/workspace/quant-trading/cron'))
+        from prediction_cron import execute_prediction
+        
+        result = execute_prediction()
+        
+        return jsonify({
+            'success': result,
+            'message': '预测执行成功' if result else '预测执行失败'
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 # ==================== 系统配置模块 ====================
 

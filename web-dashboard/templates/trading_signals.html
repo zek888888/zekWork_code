@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC AI预测统计报告 - Prediction Agent</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --border-color: #2a2a3a;
+            --up-color: #00d084;
+            --down-color: #ef4444;
+            --primary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 12px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 头部 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1 i { color: var(--primary-color); }
+        
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 208, 132, 0.1);
+            border: 1px solid var(--up-color);
+            border-radius: 20px;
+            color: var(--up-color);
+            font-size: 11px;
+        }
+        
+        .agent-status.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--down-color);
+            color: var(--down-color);
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+        
+        .stat-card-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .stat-card-value.up { color: var(--up-color); }
+        .stat-card-value.down { color: var(--down-color); }
+        .stat-card-value.neutral { color: var(--text-secondary); }
+        
+        .stat-card-change {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* 主表格区域 */
+        .predictions-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .filter-btn {
+            padding: 5px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        /* 表格样式 */
+        .predictions-table-wrapper {
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        
+        .predictions-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        
+        .predictions-table th {
+            position: sticky;
+            top: 0;
+            background: var(--bg-tertiary);
+            z-index: 10;
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        
+        .predictions-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        .predictions-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .predictions-table tr.correct {
+            border-left: 3px solid var(--up-color);
+        }
+        
+        .predictions-table tr.wrong {
+            border-left: 3px solid var(--down-color);
+        }
+        
+        .predictions-table tr.pending {
+            border-left: 3px solid var(--warning-color);
+        }
+        
+        /* 预测结果标签 */
+        .prediction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .prediction-badge.up {
+            background: rgba(0, 208, 132, 0.15);
+            color: var(--up-color);
+        }
+        
+        .prediction-badge.down {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--down-color);
+        }
+        
+        .prediction-badge.flat {
+            background: rgba(160, 160, 176, 0.15);
+            color: var(--text-secondary);
+        }
+        
+        /* 时间格式 */
+        .time-cell {
+            font-family: monospace;
+            font-size: 11px;
+        }
+        
+        .time-primary {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .time-secondary {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+        
+        /* AI预测详情 */
+        .ai-predictions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .ai-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+        
+        .ai-name {
+            font-weight: 600;
+            min-width: 80px;
+            font-size: 10px;
+        }
+        
+        .ai-result {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+        
+        .ai-prediction {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+        }
+        
+        .ai-probability {
+            font-family: monospace;
+            font-size: 10px;
+        }
+        
+        .ai-reason {
+            color: var(--text-secondary);
+            font-size: 10px;
+            line-height: 1.3;
+            max-width: 300px;
+        }
+        
+        .ai-correct {
+            color: var(--up-color);
+            font-size: 10px;
+        }
+        
+        .ai-wrong {
+            color: var(--down-color);
+            font-size: 10px;
+        }
+        
+        /* 实际结果 */
+        .actual-result {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .actual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .actual-badge.up { color: var(--up-color); }
+        .actual-badge.down { color: var(--down-color); }
+        .actual-badge.flat { color: var(--text-secondary); }
+        
+        .price-change {
+            font-family: monospace;
+            font-size: 10px;
+        }
+        
+        .price-change.up { color: var(--up-color); }
+        .price-change.down { color: var(--down-color); }
+        
+        /* 分析原因 */
+        .analysis-reason {
+            max-width: 250px;
+            font-size: 10px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+        
+        .analysis-reason.success {
+            color: var(--up-color);
+        }
+        
+        .analysis-reason.failure {
+            color: var(--down-color);
+        }
+        
+        .knowledge-tag {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 6px;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary-color);
+            border-radius: 3px;
+            font-size: 9px;
+        }
+        
+        /* 置信度条 */
+        .confidence-bar {
+            width: 50px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--up-color), var(--down-color));
+            border-radius: 2px;
+        }
+        
+        /* 状态图标 */
+        .status-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 10px;
+        }
+        
+        .status-icon.correct {
+            background: rgba(0, 208, 132, 0.2);
+            color: var(--up-color);
+        }
+        
+        .status-icon.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--down-color);
+        }
+        
+        .status-icon.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        
+        .loading-state i {
+            font-size: 32px;
+            animation: spin 1s linear infinite;
+            display: block;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 响应式 */
+        @media (max-width: 1400px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .predictions-table { font-size: 10px; }
+            .predictions-table th,
+            .predictions-table td { padding: 6px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                <i class="ti ti-brain"></i>
+                BTC AI预测统计报告 <span style="font-size:12px;color:var(--text-muted);">| Prediction Agent</span>
+            </h1>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <div class="agent-status" id="agentStatus">
+                    <i class="ti ti-activity"></i>
+                    <span>Agent运行中</span>
+                </div>
+                <button class="filter-btn" onclick="refreshData()">
+                    <i class="ti ti-refresh"></i> 刷新
+                </button>
+            </div>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <i class="ti ti-target"></i>
+                    总体准确率
+                </div>
+                <div class="stat-card-value" id="statAccuracy">--%</div>
+                <div class="stat-card-change">最近30次预测</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <i class="ti ti-chart-line"></i>
+                    正确/错误/平
+                </div>
+                <div class="stat-card-value" id="statResults">--/--/--</div>
+                <div class="stat-card-change">验证完成</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <i class="ti ti-flame"></i>
+                    DeepSeek准确率
+                </div>
+                <div class="stat-card-value" id="statDeepSeek">--%</div>
+                <div class="stat-card-change">最近30次</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <i class="ti ti-flame"></i>
+                    Kimi准确率
+                </div>
+                <div class="stat-card-value" id="statKimi">--%</div>
+                <div class="stat-card-change">最近30次</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <i class="ti ti-clock"></i>
+                    下次预测
+                </div>
+                <div class="stat-card-value" id="statNext">--:--</div>
+                <div class="stat-card-change">每15分钟执行</div>
+            </div>
+        </div>
+        
+        <!-- 预测记录表格 -->
+        <div class="predictions-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="ti ti-list-details"></i>
+                    预测记录详情
+                </div>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="correct">✓ 正确</button>
+                    <button class="filter-btn" data-filter="wrong">✗ 错误</button>
+                    <button class="filter-btn" data-filter="pending">⏳ 待验证</button>
+                </div>
+            </div>
+            
+            <div class="predictions-table-wrapper">
+                <table class="predictions-table">
+                    <thead>
+                        <tr>
+                            <th width="140">预测发起时间</th>
+                            <th width="100">预测时段</th>
+                            <th width="160">各AI预测结果</th>
+                            <th width="80">综合判断</th>
+                            <th width="120">实际结果</th>
+                            <th width="60">精确</th>
+                            <th width="250">成功/失败分析</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictionsBody">
+                        <tr>
+                            <td colspan="7" class="loading-state">
+                                <i class="ti ti-loader-2"></i>
+                                加载中...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局状态
+        let currentFilter = 'all';
+        let predictionsData = [];
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupFilters();
+            updateNextPredictTime();
+            setInterval(updateNextPredictTime, 1000);
+        });
+        
+        // 加载数据
+        async function loadData() {
+            try {
+                const response = await fetch('/api/prediction-report?days=2&limit=50');
+                const result = await response.json();
+                
+                if (result.success) {
+                    predictionsData = result.data.predictions || [];
+                    updateStats(result.data.stats);
+                    renderPredictions();
+                } else {
+                    showError(result.error);
+                }
+            } catch (err) {
+                console.error('加载失败:', err);
+                showError('网络请求失败');
+            }
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            document.getElementById('predictionsBody').innerHTML = `
+                <tr><td colspan="7" class="loading-state">
+                    <i class="ti ti-loader-2"></i>加载中...
+                </td></tr>
+            `;
+            loadData();
+        }
+        
+        // 更新统计
+        function updateStats(stats) {
+            const accuracy = stats?.overall?.accuracy_rate || 0;
+            const total = stats?.overall?.total || 0;
+            const correct = stats?.overall?.correct || 0;
+            
+            document.getElementById('statAccuracy').textContent = accuracy + '%';
+            document.getElementById('statAccuracy').className = 'stat-card-value ' + (accuracy >= 60 ? 'up' : 'down');
+            
+            // 计算各类数量
+            const wrong = predictionsData.filter(p => p.is_correct === 0).length;
+            const flat = predictionsData.filter(p => p.actual_result === 'flat').length;
+            document.getElementById('statResults').textContent = `${correct}/${wrong}/${flat}`;
+            
+            // AI准确率
+            const aiStats = stats?.ai_stats || [];
+            const deepSeek = aiStats.find(a => a.ai_name.includes('DeepSeek'));
+            const kimi = aiStats.find(a => a.ai_name.includes('Kimi'));
+            
+            document.getElementById('statDeepSeek').textContent = deepSeek ? deepSeek.accuracy_rate + '%' : '--%';
+            document.getElementById('statKimi').textContent = kimi ? kimi.accuracy_rate + '%' : '--%';
+        }
+        
+        // 渲染预测记录
+        function renderPredictions() {
+            const tbody = document.getElementById('predictionsBody');
+            
+            let filtered = predictionsData;
+            if (currentFilter === 'correct') {
+                filtered = predictionsData.filter(p => p.is_correct === 1);
+            } else if (currentFilter === 'wrong') {
+                filtered = predictionsData.filter(p => p.is_correct === 0);
+            } else if (currentFilter === 'pending') {
+                filtered = predictionsData.filter(p => p.is_correct === null);
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="empty-state">
+                        <i class="ti ti-inbox"></i>
+                        <div>暂无预测记录</div>
+                    </td></tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(p => {
+                // 判断状态
+                let rowClass = 'pending';
+                let statusIcon = '<span class="status-icon pending"><i class="ti ti-hourglass"></i></span>';
+                
+                if (p.is_correct === 1) {
+                    rowClass = 'correct';
+                    statusIcon = '<span class="status-icon correct"><i class="ti ti-check"></i></span>';
+                } else if (p.is_correct === 0) {
+                    rowClass = 'wrong';
+                    statusIcon = '<span class="status-icon wrong"><i class="ti ti-x"></i></span>';
+                }
+                
+                // 时间格式化
+                const initTime = new Date(p.predict_initiated_at);
+                const targetStart = new Date(p.target_period_start);
+                const targetEnd = new Date(p.target_period_end);
+                
+                // AI预测详情
+                let aiDetailsHtml = '';
+                if (p.ai_details && p.ai_details.length > 0) {
+                    aiDetailsHtml = '<div class="ai-predictions">' + 
+                        p.ai_details.map(ai => {
+                            const icon = ai.prediction === 'up' ? '↗' : '↘';
+                            const color = ai.prediction === 'up' ? 'var(--up-color)' : 'var(--down-color)';
+                            const check = ai.is_correct === 1 ? '<span class="ai-correct">✓</span>' : 
+                                         ai.is_correct === 0 ? '<span class="ai-wrong">✗</span>' : '';
+                            return `
+                                <div class="ai-item">
+                                    <span class="ai-name">${ai.ai_name} ${check}</span>
+                                    <div class="ai-result">
+                                        <div class="ai-prediction">
+                                            <span style="color:${color};font-weight:600;">${icon} ${ai.up_probability}%涨</span>
+                                            <span class="ai-probability">置信${Math.round(ai.confidence*100)}%</span>
+                                        </div>
+                                        <div class="ai-reason">${ai.reason || ''}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('') +
+                    '</div>';
+                }
+                
+                // 综合判断
+                const consensusBadge = p.consensus_prediction === 'up' 
+                    ? `<span class="prediction-badge up">📈 看涨</span>`
+                    : `<span class="prediction-badge down">📉 看跌</span>`;
+                
+                // 实际结果
+                let actualHtml = '<span class="actual-badge flat">待验证</span>';
+                if (p.actual_result === 'up') {
+                    actualHtml = `<span class="actual-badge up">📈 上涨</span>
+                        <span class="price-change up">+${p.actual_price_change_percent?.toFixed(2) || 0}%</span>`;
+                } else if (p.actual_result === 'down') {
+                    actualHtml = `<span class="actual-badge down">📉 下跌</span>
+                        <span class="price-change down">${p.actual_price_change_percent?.toFixed(2) || 0}%</span>`;
+                }
+                
+                // 成功/失败分析
+                let analysisHtml = '';
+                if (p.review) {
+                    const reviewClass = p.is_correct === 1 ? 'success' : 'failure';
+                    analysisHtml = `<div class="analysis-reason ${reviewClass}">${p.review.primary_reason || ''}</div>`;
+                    if (p.review.should_update_kb) {
+                        analysisHtml += '<span class="knowledge-tag">已入知识库</span>';
+                    }
+                }
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td class="time-cell">
+                            <div class="time-primary">${initTime.toLocaleString('zh-CN')}</div>
+                        </td>
+                        <td class="time-cell">
+                            <div class="time-primary">${targetStart.getHours().toString().padStart(2,'0')}:${targetStart.getMinutes().toString().padStart(2,'0')} - ${targetEnd.getHours().toString().padStart(2,'0')}:${targetEnd.getMinutes().toString().padStart(2,'0')}</div>
+                        </td>
+                        <td>${aiDetailsHtml}</td>
+                        <td>
+                            ${consensusBadge}
+                            <div style="margin-top:4px;font-size:10px;color:var(--text-muted);">
+                                ${p.consensus_up_probability}% / ${p.consensus_down_probability}%
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width:${p.consensus_up_probability}%"></div>
+                            </div>
+                        </td>
+                        <td class="actual-result">${actualHtml}</td>
+                        <td>${statusIcon}</td>
+                        <td>${analysisHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // 筛选
+        function setupFilters() {
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderPredictions();
+                });
+            });
+        }
+        
+        // 更新下次预测时间
+        function updateNextPredictTime() {
+            const now = new Date();
+            const minutes = now.getMinutes();
+            const targets = [14, 29, 44, 59];
+            
+            let nextTarget = targets.find(t => t > minutes);
+            if (!nextTarget) nextTarget = 14; // 下一小时
+            
+            const remainingMins = nextTarget > minutes ? nextTarget - minutes : 74 - minutes;
+            const remainingSecs = 50 - now.getSeconds();
+            
+            const displayMins = remainingSecs < 0 ? remainingMins - 1 : remainingMins;
+            const displaySecs = remainingSecs < 0 ? 60 + remainingSecs : remainingSecs;
+            
+            document.getElementById('statNext').textContent = 
+                `${displayMins.toString().padStart(2,'0')}:${displaySecs.toString().padStart(2,'0')}`;
+        }
+        
+        // 显示错误
+        function showError(msg) {
+            document.getElementById('predictionsBody').innerHTML = `
+                <tr><td colspan="7" class="empty-state">
+                    <i class="ti ti-alert-circle" style="color: #ef4444;"></i>
+                    <div>${msg}</div>
+                </td></tr>
+            `;
+        }
+    </script>
+</body>
+</html>

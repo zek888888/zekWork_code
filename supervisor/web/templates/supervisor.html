@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎖️ 隔壁老王 | Task Supervisor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid #334155;
+        }
+        
+        header h1 {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+        
+        .status-offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+        
+        .card h2 {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .stat-success { color: #4ade80; }
+        .stat-error { color: #f87171; }
+        .stat-warning { color: #fbbf24; }
+        .stat-info { color: #60a5fa; }
+        
+        .task-list {
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+        
+        .task-list-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-list-header h2 {
+            font-size: 1.2rem;
+        }
+        
+        .task-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        
+        .task-item:hover {
+            background: #252f47;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        
+        .task-info .meta {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        .task-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.healthy { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+        .status-dot.warning { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+        .status-dot.error { background: #f87171; box-shadow: 0 0 8px #f87171; }
+        
+        .failures-section {
+            margin-top: 24px;
+        }
+        
+        .failure-item {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .failure-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .failure-title {
+            font-weight: 600;
+            color: #f87171;
+        }
+        
+        .failure-time {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        .failure-error {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+        
+        .repair-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #1e293b;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                🎖️ 隔壁老王
+                <span class="status-badge status-online" id="system-status">
+                    <span>●</span> 运行中
+                </span>
+            </h1>
+            <p style="color: #64748b; margin-top: 8px;">
+                监控所有定时任务执行 · 自动修复 · 及时告警
+            </p>
+        </header>
+        
+        <!-- 统计卡片 -->
+        <div class="grid" id="stats-grid">
+            <div class="card">
+                <h2>今日执行</h2>
+                <div class="stat-value stat-info" id="stat-total">-</div>
+                <div class="stat-label">次任务</div>
+            </div>
+            <div class="card">
+                <h2>成功</h2>
+                <div class="stat-value stat-success" id="stat-success">-</div>
+                <div class="stat-label">次</div>
+            </div>
+            <div class="card">
+                <h2>失败</h2>
+                <div class="stat-value stat-error" id="stat-failed">-</div>
+                <div class="stat-label">待处理</div>
+            </div>
+            <div class="card">
+                <h2>成功率</h2>
+                <div class="stat-value stat-info" id="stat-rate">-</div>
+                <div class="stat-label">%</div>
+            </div>
+        </div>
+        
+        <!-- 标签页 -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('tasks')">📋 任务状态</div>
+            <div class="tab" onclick="showTab('failures')">⚠️ 失败处理</div>
+            <div class="tab" onclick="showTab('github')">💻 GitHub</div>
+            <div class="tab" onclick="showTab('history')">📜 执行历史</div>
+        </div>
+        
+        <!-- 任务状态 -->
+        <div id="tab-tasks" class="tab-content">
+            <div class="task-list">
+                <div class="task-list-header">
+                    <h2>监控中的任务</h2>
+                    <button class="btn btn-primary" onclick="refreshStatus()">刷新</button>
+                </div>
+                <div id="task-list-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 失败处理 -->
+        <div id="tab-failures" class="tab-content hidden">
+            <div class="task-list">
+                <div class="task-list-header">
+                    <h2>待修复的失败任务</h2>
+                    <button class="btn btn-primary" onclick="loadFailures()">刷新</button>
+                </div>
+                <div id="failures-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GitHub监控 -->
+        <div id="tab-github" class="tab-content hidden">
+            <div class="grid">
+                <div class="card">
+                    <h2>今日提交</h2>
+                    <div class="stat-value stat-info" id="github-commits">-</div>
+                    <div class="stat-label">次</div>
+                </div>
+                <div class="card">
+                    <h2>未推送</h2>
+                    <div class="stat-value stat-warning" id="github-unpushed">-</div>
+                    <div class="stat-label">个</div>
+                </div>
+                <div class="card">
+                    <h2>连续提交</h2>
+                    <div class="stat-value stat-success" id="github-streak">-</div>
+                    <div class="stat-label">天</div>
+                </div>
+            </div>
+            <div class="task-list">
+                <div class="task-list-header">
+                    <h2>💻 GitHub提交记录</h2>
+                    <button class="btn btn-primary" onclick="loadGithubStatus()">刷新</button>
+                </div>
+                <div id="github-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 执行历史 -->
+        <div id="tab-history" class="tab-content hidden">
+            <div class="task-list">
+                <div class="task-list-header">
+                    <h2>最近执行记录</h2>
+                    <select class="btn btn-secondary" id="history-filter" onchange="loadHistory()">
+                        <option value="">所有任务</option>
+                    </select>
+                </div>
+                <div id="history-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentTab = 'tasks';
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            event.target.classList.add('active');
+            currentTab = tab;
+            
+            if (tab === 'tasks') refreshStatus();
+            if (tab === 'failures') loadFailures();
+            if (tab === 'history') loadHistory();
+        }
+        
+        async function refreshStatus() {
+            try {
+                const res = await fetch('/api/supervisor/status');
+                const data = await res.json();
+                
+                if (data.success) {
+                    updateStats(data.data.today);
+                    updateTaskList(data.data.tasks);
+                }
+            } catch (e) {
+                console.error('刷新失败:', e);
+            }
+        }
+        
+        function updateStats(today) {
+            document.getElementById('stat-total').textContent = today.total_executions || 0;
+            document.getElementById('stat-success').textContent = today.success || 0;
+            document.getElementById('stat-failed').textContent = (today.failed || 0) + (today.timeout || 0);
+            
+            const rate = today.total_executions > 0 
+                ? ((today.success / today.total_executions) * 100).toFixed(1) 
+                : 0;
+            document.getElementById('stat-rate').textContent = rate;
+        }
+        
+        function updateTaskList(tasks) {
+            const html = tasks.map(task => `
+                <div class="task-item">
+                    <div class="task-info">
+                        <h3>${task.name} ${task.critical ? '🔴' : ''}</h3>
+                        <div class="meta">
+                            计划: ${task.schedule} | 
+                            下次: ${task.next_expected_run ? new Date(task.next_expected_run).toLocaleString() : 'N/A'}
+                        </div>
+                    </div>
+                    <div class="task-status">
+                        <span class="status-dot ${getStatusClass(task.status)}"></span>
+                        <span>${getStatusText(task.status)}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('task-list-content').innerHTML = html || '<div class="loading">暂无任务</div>';
+        }
+        
+        function getStatusClass(status) {
+            if (status === 'healthy') return 'healthy';
+            if (status === 'warning') return 'warning';
+            return 'error';
+        }
+        
+        function getStatusText(status) {
+            const map = {
+                'healthy': '健康',
+                'warning': '警告',
+                'error': '异常',
+                'unknown': '未知'
+            };
+            return map[status] || status;
+        }
+        
+        async function loadFailures() {
+            try {
+                const res = await fetch('/api/supervisor/failures?hours=24');
+                const data = await res.json();
+                
+                if (data.success) {
+                    updateFailures(data.data);
+                }
+            } catch (e) {
+                console.error('加载失败:', e);
+            }
+        }
+        
+        function updateFailures(failures) {
+            if (!failures || failures.length === 0) {
+                document.getElementById('failures-content').innerHTML = `
+                    <div class="loading">🎉 最近24小时没有失败任务</div>
+                `;
+                return;
+            }
+            
+            const html = failures.map(f => `
+                <div class="failure-item">
+                    <div class="failure-header">
+                        <span class="failure-title">${f.name} ${f.critical ? '🔴' : ''}</span>
+                        <span class="failure-time">${new Date(f.planned_time).toLocaleString()}</span>
+                    </div>
+                    <div class="failure-error">${f.error_message || 'Unknown error'}</div>
+                    <div class="repair-actions">
+                        <button class="btn btn-primary" onclick="showRepairOptions('${f.execution_id}')">
+                            修复选项
+                        </button>
+                        <button class="btn btn-secondary" onclick="ignoreFailure('${f.execution_id}')">
+                            忽略
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('failures-content').innerHTML = html;
+        }
+        
+        async function showRepairOptions(executionId) {
+            try {
+                const res = await fetch(`/api/supervisor/repair-options/${executionId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    const options = data.data.map(opt => 
+                        `<button class="btn ${opt.auto ? 'btn-primary' : 'btn-success'}" 
+                                 onclick="executeRepair('${executionId}', '${opt.id}')">
+                            ${opt.name}
+                        </button>`
+                    ).join('');
+                    
+                    alert('修复选项:\n' + data.data.map(o => `- ${o.name}: ${o.description}`).join('\n'));
+                }
+            } catch (e) {
+                console.error('获取修复选项失败:', e);
+            }
+        }
+        
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/supervisor/executions?limit=50');
+                const data = await res.json();
+                
+                if (data.success) {
+                    updateHistory(data.data);
+                }
+            } catch (e) {
+                console.error('加载历史失败:', e);
+            }
+        }
+        
+        function updateHistory(executions) {
+            if (!executions || executions.length === 0) {
+                document.getElementById('history-content').innerHTML = `
+                    <div class="loading">暂无执行记录</div>
+                `;
+                return;
+            }
+            
+            const html = executions.map(e => `
+                <div class="task-item">
+                    <div class="task-info">
+                        <h3>${e.name}</h3>
+                        <div class="meta">
+                            计划: ${new Date(e.planned_time).toLocaleString()} | 
+                            状态: ${getExecutionStatus(e.status)}
+                        </div>
+                    </div>
+                    <div class="task-status">
+                        <span class="status-dot ${getExecutionStatusClass(e.status)}"></span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('history-content').innerHTML = html;
+        }
+        
+        function getExecutionStatus(status) {
+            const map = {
+                'success': '✓ 成功',
+                'failed': '✗ 失败',
+                'timeout': '⏱ 超时',
+                'missed': '⚠ 漏执行',
+                'pending': '⏳ 待执行',
+                'running': '🔄 运行中'
+            };
+            return map[status] || status;
+        }
+        
+        function getExecutionStatusClass(status) {
+            if (status === 'success') return 'healthy';
+            if (status === 'running' || status === 'pending') return 'warning';
+            return 'error';
+        }
+        
+        async function loadGithubStatus() {
+            try {
+                const res = await fetch('/api/supervisor/github-status');
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('github-commits').textContent = data.data.commits || 0;
+                    document.getElementById('github-unpushed').textContent = data.data.unpushed || 0;
+                    document.getElementById('github-streak').textContent = data.data.streak || 0;
+                    
+                    updateGithubContent(data.data.commits_list || []);
+                }
+            } catch (e) {
+                console.error('加载GitHub状态失败:', e);
+            }
+        }
+        
+        function updateGithubContent(commits) {
+            if (!commits || commits.length === 0) {
+                document.getElementById('github-content').innerHTML = `
+                    <div class="loading">⚠️ 今日无提交，老王在盯着你！</div>
+                `;
+                return;
+            }
+            
+            const html = commits.map(c => `
+                <div class="task-item">
+                    <div class="task-info">
+                        <h3>[${c.hash}] ${c.message}</h3>
+                        <div class="meta">
+                            作者: ${c.author} | ${new Date(c.date).toLocaleString()}
+                        </div>
+                    </div>
+                    <div class="task-status">
+                        <span class="status-dot healthy"></span>
+                        <span>已提交</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('github-content').innerHTML = html;
+        }
+        
+        // 初始化
+        refreshStatus();
+        setInterval(refreshStatus, 30000); // 每30秒自动刷新
+    </script>
+</body>
+</html>
