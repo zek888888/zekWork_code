@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}模拟盘交易记录 - 战颅将军{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-gradient rounded p-2" style="background: linear-gradient(135deg, #dc3545, #fd7e14);">
+                    <i class="bi bi-skull fs-3 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="mb-0">战颅将军</h2>
+                    <p class="text-muted mb-0">模拟盘交易记录 | 5分钟级别 | 启动资金 10,000 USDT</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success">运行中</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <div class="text-muted small">当前资金</div>
+                <h3 class="mb-1" id="current-balance">--</h3>
+                <div class="small" id="total-return">--</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <div class="text-muted small">总交易数</div>
+                <h3 class="mb-1" id="total-trades">--</h3>
+                <div class="small">
+                    <span class="text-success" id="win-trades">--</span> 胜 / 
+                    <span class="text-danger" id="loss-trades">--</span> 负
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <div class="text-muted small">胜率</div>
+                <h3 class="mb-1" id="win-rate">--</h3>
+                <div class="text-muted small">目标: 70%+</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <div class="text-muted small">总盈亏</div>
+                <h3 class="mb-1" id="total-pnl">--</h3>
+                <div class="small" id="avg-pnl">--</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 资金曲线 -->
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header">
+        <i class="bi bi-graph-up"></i> 资金曲线
+    </div>
+    <div class="card-body">
+        <canvas id="equityChart" height="100"></canvas>
+    </div>
+</div>
+
+<!-- 当前持仓 -->
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-bullseye"></i> 当前持仓</span>
+        <span class="badge bg-secondary" id="open-positions-count">0 个持仓</span>
+    </div>
+    <div class="card-body">
+        <div id="open-positions">
+            <div class="text-center text-muted py-4">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 历史交易 -->
+<div class="card bg-dark border-secondary">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul"></i> 历史交易</span>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-light" onclick="loadHistory('all')">全部</button>
+            <button class="btn btn-outline-light" onclick="loadHistory('closed')">已平仓</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>交易对</th>
+                        <th>方向</th>
+                        <th>入场价</th>
+                        <th>出场价</th>
+                        <th>杠杆</th>
+                        <th>盈亏</th>
+                        <th>原因</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <tr><td colspan="8" class="text-center text-muted">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 刷新按钮 -->
+<button class="btn btn-primary rounded-circle position-fixed" style="bottom: 2rem; right: 2rem; z-index: 100; width: 60px; height: 60px;" onclick="refreshAll()">
+    <i class="bi bi-arrow-clockwise fs-4"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 加载统计数据
+async function loadStats() {
+    try {
+        const res = await fetch('/api/simulated_trades/stats');
+        const data = await res.json();
+        
+        if (data.success) {
+            const s = data.data;
+            document.getElementById('current-balance').textContent = '$' + s.current_balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('total-trades').textContent = s.total_trades;
+            document.getElementById('win-trades').textContent = s.win_trades + ' 胜';
+            document.getElementById('loss-trades').textContent = s.loss_trades + ' 负';
+            document.getElementById('win-rate').textContent = s.win_rate.toFixed(1) + '%';
+            document.getElementById('win-rate').className = s.win_rate >= 70 ? 'mb-1 text-success' : 'mb-1';
+            document.getElementById('total-pnl').textContent = (s.total_pnl >= 0 ? '+' : '') + s.total_pnl.toFixed(2) + ' USDT';
+            document.getElementById('total-pnl').className = s.total_pnl >= 0 ? 'mb-1 text-success' : 'mb-1 text-danger';
+            document.getElementById('avg-pnl').textContent = '平均 ' + (s.avg_pnl >= 0 ? '+' : '') + s.avg_pnl.toFixed(2) + ' USDT';
+            document.getElementById('total-return').textContent = (s.return_percent >= 0 ? '+' : '') + s.return_percent.toFixed(2) + '%';
+            document.getElementById('total-return').className = s.return_percent >= 0 ? 'small text-success' : 'small text-danger';
+            document.getElementById('open-positions-count').textContent = s.open_positions + ' 个持仓';
+        }
+    } catch (err) {
+        console.error('加载统计失败:', err);
+    }
+}
+
+// 加载持仓
+async function loadPositions() {
+    try {
+        const res = await fetch('/api/simulated_trades/history?status=open');
+        const data = await res.json();
+        
+        const container = document.getElementById('open-positions');
+        
+        if (!data.success || !data.data.length) {
+            container.innerHTML = '<div class="text-center text-muted py-4">暂无持仓</div>';
+            return;
+        }
+        
+        let html = '<div class="table-responsive"><table class="table table-dark table-sm"><thead><tr>' +
+            '<th>时间</th><th>交易对</th><th>方向</th><th>入场价</th><th>杠杆</th><th>保证金</th><th>止损/止盈</th>' +
+            '</tr></thead><tbody>';
+        
+        data.data.forEach(t => {
+            const directionClass = t.direction === 'long' ? 'text-success' : 'text-danger';
+            const directionText = t.direction.toUpperCase();
+            html += `<tr>
+                <td>${new Date(t.entry_time).toLocaleString('zh-CN')}</td>
+                <td>${t.symbol}</td>
+                <td class="${directionClass}">${directionText}</td>
+                <td>${t.entry_price}</td>
+                <td>${t.leverage}x</td>
+                <td>${t.margin.toFixed(2)} USDT</td>
+                <td>${t.stop_loss} / ${t.take_profit.join(', ')}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    } catch (err) {
+        document.getElementById('open-positions').innerHTML = '<div class="text-center text-danger">加载失败</div>';
+    }
+}
+
+// 加载历史
+async function loadHistory(status = 'all') {
+    try {
+        const res = await fetch(`/api/simulated_trades/history?status=${status}&limit=50`);
+        const data = await res.json();
+        
+        const tbody = document.getElementById('history-tbody');
+        
+        if (!data.success || !data.data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">暂无交易记录</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.data.map(t => {
+            const pnlClass = t.pnl > 0 ? 'text-success' : t.pnl < 0 ? 'text-danger' : 'text-muted';
+            const pnlText = t.pnl !== null ? (t.pnl >= 0 ? '+' : '') + t.pnl.toFixed(2) + ' (' + t.pnl_percent.toFixed(2) + '%)' : '-';
+            const directionClass = t.direction === 'long' ? 'text-success' : 'text-danger';
+            return `<tr>
+                <td>${new Date(t.entry_time).toLocaleString('zh-CN')}</td>
+                <td>${t.symbol}</td>
+                <td class="${directionClass}">${t.direction.toUpperCase()}</td>
+                <td>${t.entry_price}</td>
+                <td>${t.exit_price || '-'}</td>
+                <td>${t.leverage}x</td>
+                <td class="${pnlClass}">${pnlText}</td>
+                <td>${t.exit_reason || '-'}</td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        document.getElementById('history-tbody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">加载失败</td></tr>';
+    }
+}
+
+// 加载资金曲线
+async function loadEquity() {
+    try {
+        const res = await fetch('/api/simulated_trades/equity');
+        const data = await res.json();
+        
+        if (data.success && data.data.length > 0) {
+            const labels = data.data.map(d => new Date(d.timestamp).toLocaleDateString('zh-CN'));
+            const balances = data.data.map(d => d.balance);
+            
+            new Chart(document.getElementById('equityChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '资金余额 (USDT)',
+                        data: balances,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: '#2a3441' },
+                            ticks: { color: '#8892a0' }
+                        },
+                        x: {
+                            grid: { color: '#2a3441' },
+                            ticks: { color: '#8892a0' }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error('加载资金曲线失败:', err);
+    }
+}
+
+// 刷新所有
+function refreshAll() {
+    loadStats();
+    loadPositions();
+    loadHistory();
+    loadEquity();
+}
+
+// 初始化
+refreshAll();
+
+// 自动刷新
+setInterval(refreshAll, 30000);
+</script>
+{% endblock %}

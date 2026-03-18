@@ -11,7 +11,7 @@ echo "   时间: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
 # 发送启动通知
-/usr/local/bin/python3 -c "
+/usr/bin/python3 -c "
 import sys
 sys.path.insert(0, '/Users/mac/.openclaw/workspace/quant-trading')
 from supervisor.alerts.openclaw_notifier import OpenclawNotifier
@@ -21,7 +21,7 @@ notifier.notify_system_startup()
 
 # 启动监工系统
 echo "📊 启动隔壁老王..."
-/usr/local/bin/python3 supervisor/core/scheduler.py >> logs/supervisor.log 2>&1 &
+/usr/bin/python3 supervisor/core/scheduler.py >> logs/supervisor.log 2>&1 &
 PID=$!
 echo $PID > supervisor.pid
 

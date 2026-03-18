@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 交易展示页面
-http://localhost:5000/trade
+http://localhost:5050/trade
 展示战颅将军的交易记录和绩效
 """
 
@@ -179,6 +179,6 @@ if __name__ == '__main__':
     print("=" * 60)
     print("🌐 战颅将军交易展示页面")
     print("=" * 60)
-    print("访问地址: http://localhost:5000/trade")
+    print("访问地址: http://localhost:5050/trade")
     print("=" * 60)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5050, debug=True)

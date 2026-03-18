@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- 服务标识 -->
+    <key>Label</key>
+    <string>com.quant-trading.supervisor</string>
+    
+    <!-- 程序路径 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/mac/.openclaw/workspace/quant-trading/supervisor_cli.py</string>
+        <string>monitor</string>
+    </array>
+    
+    <!-- 工作目录 -->
+    <key>WorkingDirectory</key>
+    <string>/Users/mac/.openclaw/workspace/quant-trading</string>
+    
+    <!-- 标准输出日志 -->
+    <key>StandardOutPath</key>
+    <string>/Users/mac/.openclaw/workspace/quant-trading/logs/launchd_supervisor.log</string>
+    
+    <!-- 错误日志 -->
+    <key>StandardErrorPath</key>
+    <string>/Users/mac/.openclaw/workspace/quant-trading/logs/launchd_supervisor_error.log</string>
+    
+    <!-- 环境变量 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/mac/.openclaw/workspace/quant-trading</string>
+    </dict>
+    
+    <!-- 保持运行 -->
+    <key>KeepAlive</key>
+    <true/>
+    
+    <!-- 重启间隔 -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    
+    <!-- 是否在加载时立即运行 -->
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

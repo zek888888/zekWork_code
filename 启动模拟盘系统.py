@@ -30,7 +30,7 @@ def print_banner():
        ↓
     ⚔️  战颅将军  →  💰 模拟交易 (5m级别)
        ↓
-    🌐 Web展示   →  📊 交易记录 (http://localhost:5000/trade)
+    🌐 Web展示   →  📊 交易记录 (http://localhost:5050/trade)
     
     🤖 AI配置 (全DeepSeek阵容):
        战颅将军/铁算/史官/谋师: DeepSeek-R1 (量化背景)
@@ -160,12 +160,12 @@ def start_web_server():
     time.sleep(2)
     
     print(f"  ✓ Web服务已启动 (PID: {proc.pid})")
-    print(f"  📍 访问地址: http://localhost:5000/trade")
+    print(f"  📍 访问地址: http://localhost:5050/trade")
     
     return True
 
 
-def check_data_collection():
+def check_data_collection(skip=False):
     """检查是否需要数据收集"""
     print("\n📊 检查历史数据...")
     
@@ -177,6 +177,10 @@ def check_data_collection():
     count = cursor.fetchone()[0]
     
     conn.close()
+    
+    if skip:
+        print(f"  ✓ 已有 {count:,} 条历史数据 (跳过收集)")
+        return
     
     if count == 0:
         print("  ⚠️  未检测到BTC历史数据")
@@ -191,6 +195,15 @@ def check_data_collection():
             print("  ⏭️  跳过数据收集")
     else:
         print(f"  ✓ 已有 {count:,} 条历史数据")
+        print("\n  是否需要补充更多历史数据?")
+        response = input("  启动数据收集? [y/N]: ").strip().lower()
+        
+        if response == 'y':
+            print("\n  🚀 启动千手财童数据收集...")
+            collector_script = f"{PROJECT_ROOT}/千手财童_data_collector.py"
+            subprocess.run([sys.executable, collector_script], cwd=PROJECT_ROOT)
+        else:
+            print("  ⏭️  跳过数据收集，使用现有数据")
 
 
 def stop_web_server():
@@ -217,6 +230,8 @@ def main():
     parser.add_argument('command', choices=['start', 'stop', 'status'], 
                        nargs='?', default='start',
                        help='命令: start/stop/status')
+    parser.add_argument('--skip-data', action='store_true',
+                       help='跳过数据收集')
     
     args = parser.parse_args()
     
@@ -227,7 +242,10 @@ def main():
         check_database()
         
         # 检查数据收集
-        check_data_collection()
+        try:
+            check_data_collection(skip=args.skip_data)
+        except KeyboardInterrupt:
+            print("\n\n  ⏹️  数据收集被中断")
         
         # 启动Web服务
         start_web_server()
@@ -236,7 +254,7 @@ def main():
         print("✅ 系统启动完成!")
         print("=" * 70)
         print("\n可用操作:")
-        print("  • 查看交易记录: http://localhost:5000/trade")
+        print("  • 查看交易记录: http://localhost:5050/trade")
         print("  • 停止服务: python 启动模拟盘系统.py stop")
         print("\n按 Ctrl+C 停止")
         print("=" * 70)

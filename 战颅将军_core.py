@@ -102,10 +102,17 @@ class 子智能体基类:
         """调用DeepSeek API"""
         try:
             import requests
+            from dotenv import load_dotenv
+            
+            # 重新加载环境变量
+            load_dotenv('/Users/mac/.openclaw/workspace/quant-trading/.env')
             
             api_key = os.getenv('DEEPSEEK_API_KEY')
+            base_url = os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1')
+            
             if not api_key:
-                raise ValueError("未设置DEEPSEEK_API_KEY")
+                self.logger.error("未设置DEEPSEEK_API_KEY")
+                return ""
             
             response = requests.post(
                 'https://api.deepseek.com/v1/chat/completions',
@@ -443,7 +450,7 @@ class 战颅将军:
             {'sentiment': 情报.sentiment, 'confidence': 情报.confidence},
             market_data.get('historical', [])
         )
-        self.logger.info(f"   回测得分: {回测.backtest_score}/100, 胜率: {回测.win_rate:.1%}")
+        self.logger.info(f"   回测得分: {回测.backtest_score or 0}/100, 胜率: {(回测.win_rate or 0)*100:.1f}%")
         
         # Step 3: 谋师制定策略
         策略 = self.子智能体['谋师'].制定策略(market_data, 情报, 回测)

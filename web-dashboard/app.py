@@ -2301,5 +2301,155 @@ def remove_wallet_api():
     
     return jsonify({'success': True})
 
+# ==================== 战颅将军 - 模拟盘交易模块 ====================
+
+@app.route('/simulated_trades')
+@login_required
+def simulated_trades():
+    """战颅将军 - 模拟盘交易记录页面"""
+    return render_template('simulated_trades.html')
+
+@app.route('/api/simulated_trades/stats')
+@login_required
+def api_simulated_trade_stats():
+    """API: 获取模拟盘交易统计"""
+    try:
+        conn = get_db_connection()
+        
+        # 总体统计
+        cursor = conn.execute('''
+            SELECT 
+                COUNT(*) as total_trades,
+                SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) as win_trades,
+                SUM(CASE WHEN pnl < 0 THEN 1 ELSE 0 END) as loss_trades,
+                SUM(CASE WHEN pnl = 0 THEN 1 ELSE 0 END) as break_even,
+                SUM(pnl) as total_pnl,
+                AVG(pnl) as avg_pnl,
+                AVG(CASE WHEN pnl > 0 THEN pnl END) as avg_win,
+                AVG(CASE WHEN pnl < 0 THEN pnl END) as avg_loss
+            FROM simulated_trades
+            WHERE exit_time IS NOT NULL
+        ''')
+        
+        row = cursor.fetchone()
+        
+        stats = {
+            'total_trades': row['total_trades'] or 0,
+            'win_trades': row['win_trades'] or 0,
+            'loss_trades': row['loss_trades'] or 0,
+            'break_even': row['break_even'] or 0,
+            'total_pnl': round(row['total_pnl'] or 0, 2),
+            'avg_pnl': round(row['avg_pnl'] or 0, 2),
+            'avg_win': round(row['avg_win'] or 0, 2),
+            'avg_loss': round(row['avg_loss'] or 0, 2),
+            'win_rate': round((row['win_trades'] or 0) / row['total_trades'] * 100, 2) if row['total_trades'] else 0
+        }
+        
+        # 当前持仓
+        cursor = conn.execute('''
+            SELECT COUNT(*) as count
+            FROM simulated_trades
+            WHERE exit_time IS NULL
+        ''')
+        stats['open_positions'] = cursor.fetchone()['count']
+        
+        # 当前资金
+        cursor = conn.execute('''
+            SELECT balance FROM equity_curve
+            ORDER BY timestamp DESC
+            LIMIT 1
+        ''')
+        row = cursor.fetchone()
+        stats['current_balance'] = round(row['balance'], 2) if row else 10000
+        stats['return_percent'] = round((stats['current_balance'] - 10000) / 10000 * 100, 2)
+        
+        conn.close()
+        
+        return jsonify({'success': True, 'data': stats})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/simulated_trades/history')
+@login_required
+def api_simulated_trade_history():
+    """API: 获取模拟盘交易历史"""
+    try:
+        conn = get_db_connection()
+        
+        limit = request.args.get('limit', 50, type=int)
+        status = request.args.get('status', 'all')  # all/open/closed
+        
+        query = '''
+            SELECT * FROM simulated_trades
+        '''
+        
+        if status == 'open':
+            query += ' WHERE exit_time IS NULL'
+        elif status == 'closed':
+            query += ' WHERE exit_time IS NOT NULL'
+        
+        query += ' ORDER BY entry_time DESC LIMIT ?'
+        
+        cursor = conn.execute(query, (limit,))
+        
+        trades = []
+        for row in cursor.fetchall():
+            trade = {
+                'trade_id': row['trade_id'],
+                'symbol': row['symbol'],
+                'direction': row['direction'],
+                'entry_time': row['entry_time'],
+                'entry_price': row['entry_price'],
+                'position_size': row['position_size'],
+                'leverage': row['leverage'],
+                'margin': row['margin'],
+                'stop_loss': row['stop_loss'],
+                'take_profit': json.loads(row['take_profit']) if row['take_profit'] else [],
+                'exit_time': row['exit_time'],
+                'exit_price': row['exit_price'],
+                'exit_reason': row['exit_reason'],
+                'pnl': round(row['pnl'], 2) if row['pnl'] else None,
+                'pnl_percent': round(row['pnl_percent'] * 100, 2) if row['pnl_percent'] else None,
+                'confidence': row['confidence'],
+                'reasoning': row['reasoning']
+            }
+            trades.append(trade)
+        
+        conn.close()
+        
+        return jsonify({'success': True, 'data': trades})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/simulated_trades/equity')
+@login_required
+def api_simulated_trade_equity():
+    """API: 获取模拟盘资金曲线"""
+    try:
+        conn = get_db_connection()
+        
+        cursor = conn.execute('''
+            SELECT timestamp, balance, total_pnl
+            FROM equity_curve
+            ORDER BY timestamp
+        ''')
+        
+        equity = []
+        for row in cursor.fetchall():
+            equity.append({
+                'timestamp': row['timestamp'],
+                'balance': round(row['balance'], 2),
+                'total_pnl': round(row['total_pnl'], 2)
+            })
+        
+        conn.close()
+        
+        return jsonify({'success': True, 'data': equity})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

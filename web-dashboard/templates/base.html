@@ -59,6 +59,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'simulated_trades' %}active{% endif %}" href="{{ url_for('simulated_trades') }}">
+                            <i class="bi bi-skull"></i> 战颅将军
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">
                             <i class="bi bi-file-earmark-text"></i> 报告
                         </a>
