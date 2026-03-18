@@ -28,7 +28,7 @@ from prediction_service import get_prediction_service
 DB_PATH = PROJECT_PATH / "data" / "market_data.db"
 
 
-def get_klines_for_prediction(symbol: str, interval: str, limit: int = 20):
+def get_klines_for_prediction(symbol: str, interval: str, limit: int = 80):
     """获取K线数据用于预测"""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -46,7 +46,7 @@ def get_klines_for_prediction(symbol: str, interval: str, limit: int = 20):
     rows = cursor.fetchall()
     conn.close()
     
-    if not rows or len(rows) < 10:
+    if not rows or len(rows) < 30:
         return None
     
     klines_data = []
@@ -71,9 +71,9 @@ def build_prediction_prompt(klines_data: list, interval: str, symbol: str) -> st
     
     interval_cn = {'15m': '15分钟', '30m': '30分钟', '1h': '1小时'}.get(interval, interval)
     
-    # 格式化K线数据
+    # 格式化K线数据 - 使用最近20根K线进行分析
     klines_table = []
-    for i, k in enumerate(klines_data[-10:]):
+    for i, k in enumerate(klines_data[-20:]):
         klines_table.append(
             f"{i+1:2d}. {k['timestamp']} | C:{k['close']:>10.2f} | "
             f"MACD:{k['macd_hist']:>8.2f} | KDJ_J:{k['kdj_j']:>6.2f}"
@@ -86,7 +86,7 @@ def build_prediction_prompt(klines_data: list, interval: str, symbol: str) -> st
 - MACD柱状图: {latest['macd_hist']:.2f}
 - KDJ J值: {latest['kdj_j']:.2f}
 
-【最近10根{interval_cn}K线】
+【最近20根{interval_cn}K线】
 {chr(10).join(klines_table)}
 
 【预测要求】

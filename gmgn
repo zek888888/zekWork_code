@@ -1,0 +1,91 @@
+#!/bin/bash
+# GMGN 快捷启动脚本
+
+export https_proxy=http://127.0.0.1:7897
+export http_proxy=http://127.0.0.1:7897
+export HTTPS_PROXY=http://127.0.0.1:7897
+export HTTP_PROXY=http://127.0.0.1:7897
+
+cd ~/.config/gmgn
+
+# 如果没有参数，显示帮助
+if [ $# -eq 0 ]; then
+    echo "🚀 GMGN 快捷命令"
+    echo ""
+    echo "用法: gmgn <命令> [参数]"
+    echo ""
+    echo "常用命令:"
+    echo "  gmgn trending           - 热门代币"
+    echo "  gmgn wallet             - 钱包信息"
+    echo "  gmgn holdings           - 持仓列表"
+    echo "  gmgn token <地址>       - 代币信息"
+    echo "  gmgn security <地址>    - 安全分析"
+    echo "  gmgn kline <地址>       - K线数据"
+    echo ""
+    echo "或者直接使用: gmgn-cli <命令>"
+    exit 0
+fi
+
+# 快捷命令映射
+case "$1" in
+    trending|金狗|jg)
+        shift
+        gmgn-cli market trending --chain sol --interval 1h --orderby volume --limit 20 "$@"
+        ;;
+    wallet|钱包)
+        gmgn-cli portfolio info
+        ;;
+    holdings|持仓)
+        shift
+        gmgn-cli portfolio holdings --chain sol --wallet AJALQx1j5XJB5aHdXC2CMQfVWehAv6YFkhBFk7MYx4qU "$@"
+        ;;
+    activity|交易)
+        shift
+        gmgn-cli portfolio activity --chain sol --wallet AJALQx1j5XJB5aHdXC2CMQfVWehAv6YFkhBFk7MYx4qU "$@"
+        ;;
+    token|代币)
+        shift
+        gmgn-cli token info --chain sol "$@"
+        ;;
+    security|安全)
+        shift
+        gmgn-cli token security --chain sol "$@"
+        ;;
+    pool|池子)
+        shift
+        gmgn-cli token pool --chain sol "$@"
+        ;;
+    holders|持仓地址)
+        shift
+        gmgn-cli token holders --chain sol "$@"
+        ;;
+    kline|k线)
+        shift
+        # 默认获取最近24小时1小时K线
+        if [ $# -eq 0 ]; then
+            echo "用法: gmgn kline <代币地址> [1m|5m|15m|1h|4h|1d]"
+            exit 1
+        fi
+        ADDRESS="$1"
+        RESOLUTION="${2:-1h}"
+        FROM=$(date -v-24H +%s)
+        TO=$(date +%s)
+        gmgn-cli market kline --chain sol --address "$ADDRESS" --resolution "$RESOLUTION" --from "$FROM" --to "$TO"
+        ;;
+    pump)
+        gmgn-cli market trending --chain sol --interval 1h --platform Pump.fun --limit 20
+        ;;
+    sol|索尔)
+        gmgn-cli "$@" --chain sol
+        ;;
+    bsc)
+        gmgn-cli "$@" --chain bsc
+        ;;
+    base)
+        gmgn-cli "$@" --chain base
+        ;;
+    *)
+        # 直接传递所有参数给 gmgn-cli
+        gmgn-cli "$@"
+        ;;
+esac

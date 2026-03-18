@@ -149,7 +149,7 @@
     overflow: hidden;
 }
 
-/* 左下：热点土狗 */
+/* 左下：热点金狗 */
 .meme-card {
     grid-row: 2;
     grid-column: 1;
@@ -704,7 +704,7 @@
     animation: spin 1s linear infinite;
 }
 
-/* ========== 土狗币 - 紧凑列表 ========== */
+/* ========== 金狗币 - 紧凑列表 ========== */
 .meme-list {
     display: flex;
     flex-direction: column;
@@ -1327,12 +1327,12 @@
             </div>
         </div>
 
-        <!-- 左下：热点土狗 -->
+        <!-- 左下：热点金狗 -->
         <div class="card meme-card">
             <div class="card-header">
                 <div class="section-title">
                     <span class="section-icon icon-meme"><i class="ti ti-flame"></i></span>
-                    <h2>热点土狗</h2>
+                    <h2>🐕 热点金狗 (BSC/24h)</h2>
                 </div>
                 <div style="display: flex; gap: 3px;">
                     <a href="https://gmgn.ai/" target="_blank" class="refresh-btn" style="padding: 1px 4px;">
@@ -1985,21 +1985,38 @@ function analyzeTwitterPosts() {
     });
 }
 
-// ========== 渲染土狗币 ==========
-function renderMemeCoins() {
-    const html = mockData.memeCoins.map((c, i) => {
-        const cls = c.change24h >= 0 ? 'positive' : 'negative';
+// ========== 渲染金狗币 ==========
+function renderMemeCoins(coins) {
+    // 保存数据供详情弹窗使用
+    if (coins && coins.length > 0) {
+        currentMemeCoins = coins;
+    }
+    
+    if (!coins || coins.length === 0) {
+        document.getElementById('memeContainer').innerHTML = `
+            <div class="empty-state">
+                <i class="ti ti-coins"></i>
+                <div style="font-size: 10px;">暂无数据</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const html = coins.map((c, i) => {
+        const cls = c.change_24h >= 0 ? 'positive' : 'negative';
+        const smartBadge = c.smart_degen > 0 ? `<span style="font-size: 8px; background: rgba(255,215,0,0.2); color: #ffd700; padding: 1px 3px; border-radius: 2px; margin-left: 4px;">🐋${c.smart_degen}</span>` : '';
+        const honeypotBadge = c.is_honeypot ? `<span style="font-size: 8px; background: rgba(239,68,68,0.3); color: #ef4444; padding: 1px 3px; border-radius: 2px; margin-left: 4px;">⚠️蜜罐</span>` : '';
         return `
-            <div class="meme-item" onclick="showMemeDetail(${c.id})">
+            <div class="meme-item" onclick="showMemeDetail(${c.id})" title="市值: $${(c.market_cap/1000000).toFixed(2)}M | 流动性: $${(c.liquidity/1000).toFixed(1)}K | 持仓: ${c.holders}">
                 <div class="meme-rank ${i < 3 ? 'top' : ''}">${i + 1}</div>
-                <div class="meme-icon">${c.icon}</div>
+                <div class="meme-icon" style="font-size: 12px;">🪙</div>
                 <div class="meme-info">
-                    <div class="meme-name">${c.name}</div>
+                    <div class="meme-name">${c.name}${smartBadge}${honeypotBadge}</div>
                     <div class="meme-symbol">${c.symbol}</div>
                 </div>
                 <div class="meme-price-info">
                     <div class="meme-price">${formatPrice(c.price)}</div>
-                    <div class="meme-change ${cls}">${c.change24h >= 0 ? '+' : ''}${c.change24h.toFixed(2)}%</div>
+                    <div class="meme-change ${cls}">${c.change_24h >= 0 ? '+' : ''}${c.change_24h.toFixed(1)}%</div>
                 </div>
             </div>
         `;
@@ -2373,21 +2390,52 @@ function showNewsDetail(id) {
     document.getElementById('detailModal').classList.add('active');
 }
 
+let currentMemeCoins = [];
+
 function showMemeDetail(id) {
-    const c = mockData.memeCoins.find(x => x.id === id);
+    const c = currentMemeCoins.find(x => x.id === id);
     if (!c) return;
-    const cls24 = c.change24h >= 0 ? 'positive' : 'negative';
-    const cls7 = c.change7d >= 0 ? 'positive' : 'negative';
-    document.getElementById('modalTitle').innerHTML = `${c.icon} ${c.name}`;
+    const cls24 = c.change_24h >= 0 ? 'positive' : 'negative';
+    const cls1h = c.change_1h >= 0 ? 'positive' : 'negative';
+    document.getElementById('modalTitle').innerHTML = `🪙 ${c.name} <span style="font-size: 12px; color: var(--text-muted);">(${c.symbol})</span>`;
     document.getElementById('modalBody').innerHTML = `
         <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 28px; font-weight: 700; margin-bottom: 8px;">${formatPrice(c.price)}</div>
-            <div style="display: flex; justify-content: center; gap: 12px;">
-                <span class="news-badge ${cls24}">24h: ${c.change24h >= 0 ? '+' : ''}${c.change24h.toFixed(2)}%</span>
-                <span class="news-badge ${cls7}">7d: ${c.change7d >= 0 ? '+' : ''}${c.change7d.toFixed(2)}%</span>
+            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${formatPrice(c.price)}</div>
+            <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                <span class="news-badge ${cls24}">24h: ${c.change_24h >= 0 ? '+' : ''}${c.change_24h.toFixed(1)}%</span>
+                <span class="news-badge ${cls1h}">1h: ${c.change_1h >= 0 ? '+' : ''}${c.change_1h.toFixed(1)}%</span>
             </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 9px; color: var(--text-muted);">市值</div>
+                <div style="font-size: 12px; font-weight: 600;">$${(c.market_cap/1000000).toFixed(2)}M</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 9px; color: var(--text-muted);">流动性</div>
+                <div style="font-size: 12px; font-weight: 600;">$${(c.liquidity/1000).toFixed(1)}K</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 9px; color: var(--text-muted);">持仓人数</div>
+                <div style="font-size: 12px; font-weight: 600;">${c.holders}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 9px; color: var(--text-muted);">聪明钱</div>
+                <div style="font-size: 12px; font-weight: 600;">${c.smart_degen} 🐋</div>
+            </div>
+        </div>
+        <div style="margin-top: 12px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 4px;">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">合约地址</div>
+            <div style="font-size: 9px; font-family: monospace; word-break: break-all;">${c.address}</div>
+        </div>
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <a href="https://gmgn.ai/token/bsc/${c.address}" target="_blank" style="flex: 1; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; text-align: center; font-size: 11px; color: white; text-decoration: none;">
+                在 GMGN 查看
+            </a>
+            <a href="https://bscscan.com/token/${c.address}" target="_blank" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; text-align: center; font-size: 11px; color: var(--text-primary); text-decoration: none; border: 1px solid var(--border-color);">
+                BscScan
+            </a>
+        </div>
             <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; text-align: center;">
                 <div style="font-size: 9px; color: var(--text-muted);">市值</div>
                 <div style="font-weight: 600; font-size: 13px;">$${(Math.random()*10+1).toFixed(2)}B</div>
@@ -2472,12 +2520,39 @@ function refreshNews() {
     renderNews();
 }
 
-function refreshMemeCoins() {
-    mockData.memeCoins.forEach(c => {
-        c.price *= (1 + (Math.random() - 0.5) * 0.05);
-        c.change24h += (Math.random() - 0.5) * 2;
-    });
-    renderMemeCoins();
+async function refreshMemeCoins() {
+    const container = document.getElementById('memeContainer');
+    container.innerHTML = `
+        <div class="empty-state">
+            <i class="ti ti-loader-2 ti-spin"></i>
+            <div style="font-size: 10px;">加载金狗数据...</div>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/api/gmgn/hot');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        renderMemeCoins(data);
+    } catch (error) {
+        console.error('加载金狗数据失败:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="ti ti-alert-circle" style="color: #ef4444;"></i>
+                <div style="font-size: 10px; color: #ef4444;">加载失败: ${error.message}</div>
+                <button onclick="refreshMemeCoins()" style="margin-top: 8px; padding: 4px 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-radius: 4px; font-size: 10px; cursor: pointer;">
+                    重试
+                </button>
+            </div>
+        `;
+    }
 }
 
 function refreshSectors() {
@@ -3001,7 +3076,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('新闻数据加载失败:', e);
     }
     
-    renderMemeCoins();
+    refreshMemeCoins();
     renderWallets();
     renderSectors();
     initBTCChart();

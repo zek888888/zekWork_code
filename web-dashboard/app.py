@@ -1328,28 +1328,63 @@ def btc_data_api():
 @app.route('/api/gmgn/hot')
 @login_required
 def gmgn_hot_api():
-    """获取GMGN热门币种（模拟数据）"""
-    import random
-    
-    # 模拟GMGN热门币种数据
-    tokens = [
-        {'name': 'PEPE', 'symbol': 'PEPE', 'price': 0.000001234, 'change_24h': 45.23},
-        {'name': 'SHIB', 'symbol': 'SHIB', 'price': 0.00002845, 'change_24h': 12.56},
-        {'name': 'DOGE', 'symbol': 'DOGE', 'price': 0.15678, 'change_24h': 8.92},
-        {'name': 'FLOKI', 'symbol': 'FLOKI', 'price': 0.00004567, 'change_24h': 23.45},
-        {'name': 'BONK', 'symbol': 'BONK', 'price': 0.00002341, 'change_24h': -5.67},
-        {'name': 'WIF', 'symbol': 'WIF', 'price': 2.456, 'change_24h': 34.12},
-        {'name': 'BOME', 'symbol': 'BOME', 'price': 0.01234, 'change_24h': 67.89},
-        {'name': 'POPCAT', 'symbol': 'POPCAT', 'price': 0.567, 'change_24h': 15.34},
-        {'name': 'MOG', 'symbol': 'MOG', 'price': 0.000000456, 'change_24h': 89.12},
-        {'name': 'SPX', 'symbol': 'SPX', 'price': 0.123, 'change_24h': -12.34}
-    ]
-    
-    # 随机调整价格
-    for token in tokens:
-        token['price'] *= (1 + random.uniform(-0.05, 0.05))
-    
-    return jsonify(tokens)
+    """获取GMGN BSC链24小时热门币种"""
+    try:
+        import subprocess
+        import json
+        import os
+        
+        # 使用 gmgn-cli 获取数据（更稳定）
+        env = os.environ.copy()
+        env['https_proxy'] = 'http://127.0.0.1:7897'
+        env['http_proxy'] = 'http://127.0.0.1:7897'
+        
+        result = subprocess.run(
+            ['gmgn-cli', 'market', 'trending', '--chain', 'bsc', '--interval', '24h', '--orderby', 'volume', '--limit', '15'],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env
+        )
+        
+        if result.returncode != 0:
+            return jsonify({'error': f'gmgn-cli error: {result.stderr}'}), 500
+        
+        data = json.loads(result.stdout)
+        
+        if data.get('code') != 0:
+            return jsonify({'error': 'GMGN API returned error'}), 500
+        
+        # 解析数据
+        tokens = []
+        rank_list = data.get('data', {}).get('rank', [])
+        
+        for i, token in enumerate(rank_list[:15], 1):
+            tokens.append({
+                'id': i,
+                'name': token.get('name', 'Unknown'),
+                'symbol': token.get('symbol', 'Unknown'),
+                'price': token.get('price', 0),
+                'change_24h': token.get('price_change_percent', 0),
+                'change_1h': token.get('price_change_percent1h', 0),
+                'volume': token.get('volume', 0),
+                'market_cap': token.get('market_cap', 0),
+                'liquidity': token.get('liquidity', 0),
+                'holders': token.get('holder_count', 0),
+                'smart_degen': token.get('smart_degen_count', 0),
+                'address': token.get('address', ''),
+                'chain': 'bsc',
+                'launchpad': token.get('launchpad', ''),
+                'is_honeypot': token.get('is_honeypot', 0)
+            })
+        
+        return jsonify(tokens)
+        
+    except Exception as e:
+        import traceback
+        print(f"GMGN API Error: {e}")
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 # ========== 币安实时数据API ==========
