@@ -1,0 +1,707 @@
+{
+  "collection_time": "2026-03-24T13:46:51.350705",
+  "target_date": "2026-03-20",
+  "kol_count": 10,
+  "successful_kols": 6,
+  "kol_data": [
+    {
+      "username": "joely7758521",
+      "category": "交易员",
+      "count": 3,
+      "tweets": [
+        {
+          "created_at": "2026-03-24T02:37:51.000Z",
+          "id": "2036271243918450823",
+          "text": "@LongYu286 no，想说的是不要看历史价格🤔",
+          "author_id": "1585159078526955520",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 2,
+            "like_count": 4,
+            "quote_count": 0,
+            "bookmark_count": 1,
+            "impression_count": 392
+          },
+          "edit_history_tweet_ids": [
+            "2036271243918450823"
+          ]
+        },
+        {
+          "created_at": "2026-03-24T01:18:54.000Z",
+          "id": "2036251374338580738",
+          "text": "历史不是简单的重复\n\n不要刻舟求剑🤔",
+          "author_id": "1585159078526955520",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 6,
+            "like_count": 45,
+            "quote_count": 0,
+            "bookmark_count": 2,
+            "impression_count": 6442
+          },
+          "edit_history_tweet_ids": [
+            "2036251374338580738"
+          ]
+        },
+        {
+          "created_at": "2026-03-23T14:17:23.000Z",
+          "id": "2036084902131847313",
+          "text": "今天发现一本书叫《钝感力》\n\n值得好好拜读一下\n\nhttps://t.co/Yc4lbmZIgn",
+          "author_id": "1585159078526955520",
+          "public_metrics": {
+            "retweet_count": 4,
+            "reply_count": 8,
+            "like_count": 29,
+            "quote_count": 0,
+            "bookmark_count": 9,
+            "impression_count": 3842
+          },
+          "edit_history_tweet_ids": [
+            "2036084902131847313"
+          ]
+        }
+      ]
+    },
+    {
+      "username": "darrencao2024",
+      "category": "交易员",
+      "count": 5,
+      "tweets": [
+        {
+          "public_metrics": {
+            "retweet_count": 1,
+            "reply_count": 0,
+            "like_count": 4,
+            "quote_count": 0,
+            "bookmark_count": 3,
+            "impression_count": 2352
+          },
+          "text": "今年标普大盘到目前为止下跌了3.86%，纳斯达克指数下跌了4.28%。\n\n于此同时，追踪标普大盘的covered call ETF GPIX的总体收益是-2.57%， 追踪纳斯达克指数的covered call ETF GPIQ的总体收益是-2.28%。\n\n今年的高波动市场环境，持有covered call https://t.co/Jlw68AzhtA",
+          "created_at": "2026-03-24T03:11:56.000Z",
+          "author_id": "1088063997536944129",
+          "edit_history_tweet_ids": [
+            "2036279821982953569"
+          ],
+          "id": "2036279821982953569"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 1310
+          },
+          "text": "的确，吃香太难看。 https://t.co/QSVqVyl0vH",
+          "created_at": "2026-03-23T14:17:39.000Z",
+          "author_id": "1088063997536944129",
+          "edit_history_tweet_ids": [
+            "2036084966220587370"
+          ],
+          "id": "2036084966220587370"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 2,
+            "reply_count": 0,
+            "like_count": 41,
+            "quote_count": 0,
+            "bookmark_count": 1,
+            "impression_count": 9381
+          },
+          "text": "特斯拉盘中上涨4%，是受到整体市场情绪的影响，以及周末马斯克提出的Terafab计划。拿住手里的股票，我虽然在这次下跌中没有加仓，但手里15%的股票一股没卖，长期看好特斯拉。 https://t.co/BBFUFAvoli",
+          "created_at": "2026-03-23T14:17:25.000Z",
+          "author_id": "1088063997536944129",
+          "edit_history_tweet_ids": [
+            "2036084909618471093"
+          ],
+          "id": "2036084909618471093"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 1,
+            "reply_count": 2,
+            "like_count": 14,
+            "quote_count": 0,
+            "bookmark_count": 2,
+            "impression_count": 3891
+          },
+          "text": "PLTR盘中股价上涨5%, 一度接近$160。\n\n之前我发布这期视频的时候，看空的声音很多。有人说Pltr就是骗子公司，也有的说Pltr股价只值$20。当时Pltr的股价大概在130出头。\n\n在市场情绪依然不佳的情况下，Pltr从最低点已经有了20%的涨幅，一旦市场开始反弹，看好Pltr可以重回历史新高。 https://t.co/L7wTYh13NG",
+          "created_at": "2026-03-23T14:15:21.000Z",
+          "author_id": "1088063997536944129",
+          "edit_history_tweet_ids": [
+            "2036084387721191628"
+          ],
+          "id": "2036084387721191628"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 1,
+            "quote_count": 1,
+            "bookmark_count": 1,
+            "impression_count": 6482
+          },
+          "text": "大空头Michael Burry 做空 Palantir：AI骗局还是行业龙头？目标价$46? Palantir个股深度解析 https://t.co/1DcgiDtgo7 via @YouTube",
+          "created_at": "2026-03-23T14:11:41.000Z",
+          "author_id": "1088063997536944129",
+          "edit_history_tweet_ids": [
+            "2036083465532121314"
+          ],
+          "id": "2036083465532121314"
+        }
+      ]
+    },
+    {
+      "username": "0xSunNFT",
+      "category": "Influencer",
+      "count": 1,
+      "tweets": [
+        {
+          "author_id": "1146492710582308864",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 3,
+            "quote_count": 0,
+            "bookmark_count": 1,
+            "impression_count": 788
+          },
+          "text": "@suji_yan 主要做多模态、跨模态",
+          "id": "2036285520922419446",
+          "created_at": "2026-03-24T03:34:35.000Z",
+          "edit_history_tweet_ids": [
+            "2036285520922419446"
+          ]
+        }
+      ]
+    },
+    {
+      "username": "cz_binance",
+      "category": "官方",
+      "count": 3,
+      "tweets": [
+        {
+          "id": "2036312866467488021",
+          "text": "RT @Nianeducation: Day 160 : 在印度尼西亚通过 Giggle Academy  学习中文。\n\nOne class a day @GiggleAcademy worldwide. @cz_binance @heyibinance @NiannianCT…",
+          "edit_history_tweet_ids": [
+            "2036312866467488021"
+          ],
+          "public_metrics": {
+            "retweet_count": 18,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 3
+          },
+          "created_at": "2026-03-24T05:23:14.000Z",
+          "author_id": "902926941413453824"
+        },
+        {
+          "id": "2036312211531112885",
+          "text": "RT @dabiaoge: 今年年初有组织有纪律通过更改账号FUD币安的被@zachxbt 全都揪出来了，这完全是一个诈骗团伙\n\n图一，图二是同一个账号，假装成BNB Builder来FUD币安的\n\n正义可能会迟到，但绝对不会缺席\n兄弟们，在网上一定要有辨别真假消息的能力，千万…",
+          "edit_history_tweet_ids": [
+            "2036312211531112885"
+          ],
+          "public_metrics": {
+            "retweet_count": 4,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 2
+          },
+          "created_at": "2026-03-24T05:20:38.000Z",
+          "author_id": "902926941413453824"
+        },
+        {
+          "id": "2036280435672752166",
+          "text": ".@GiggleAcademy is now teaching 201,938 kids, for free. https://t.co/E7E2dawkD0",
+          "edit_history_tweet_ids": [
+            "2036280435672752166"
+          ],
+          "public_metrics": {
+            "retweet_count": 105,
+            "reply_count": 488,
+            "like_count": 1069,
+            "quote_count": 29,
+            "bookmark_count": 21,
+            "impression_count": 123354
+          },
+          "created_at": "2026-03-24T03:14:22.000Z",
+          "author_id": "902926941413453824"
+        }
+      ]
+    },
+    {
+      "username": "monkeyjiang",
+      "category": "交易员",
+      "count": 6,
+      "tweets": [
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 747
+          },
+          "text": "@lijiuer1 九儿要么不赚，一赚就是大的🤭",
+          "edit_history_tweet_ids": [
+            "2036106129982251238"
+          ],
+          "author_id": "1954166149",
+          "id": "2036106129982251238",
+          "created_at": "2026-03-23T15:41:45.000Z"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 536
+          },
+          "text": "@sharkLin162567 确实爽",
+          "edit_history_tweet_ids": [
+            "2036097662353645961"
+          ],
+          "author_id": "1954166149",
+          "id": "2036097662353645961",
+          "created_at": "2026-03-23T15:08:06.000Z"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 701
+          },
+          "text": "@YiXinYu60278863 闲着也是闲着，苍蝇肉也是肉😄",
+          "edit_history_tweet_ids": [
+            "2036096572182700261"
+          ],
+          "author_id": "1954166149",
+          "id": "2036096572182700261",
+          "created_at": "2026-03-23T15:03:46.000Z"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 1,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 70
+          },
+          "text": "@goflyWeb3 好像没有不跌的现在😂",
+          "edit_history_tweet_ids": [
+            "2036096053959704904"
+          ],
+          "author_id": "1954166149",
+          "id": "2036096053959704904",
+          "created_at": "2026-03-23T15:01:42.000Z"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 2,
+            "reply_count": 25,
+            "like_count": 29,
+            "quote_count": 0,
+            "bookmark_count": 5,
+            "impression_count": 12334
+          },
+          "text": "熊市撸强势币有多爽？\n\n10天左右，在River上搞了1万U，7万大洋\n\n行情这么冷，能发现赚钱的机会还真不容易\n\n这次主要做它的短线机会\n\n据我观察，River的庄操盘很有节奏\n\n基本都是小碎步前进，每天时不时来一把暴跌插针清清合约\n\n每次跌到20以下再快速拉回来 https://t.co/Le2mwmirwW",
+          "edit_history_tweet_ids": [
+            "2036095877127852045"
+          ],
+          "author_id": "1954166149",
+          "id": "2036095877127852045",
+          "created_at": "2026-03-23T15:01:00.000Z"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 68
+          },
+          "text": "@zzcc1180 @HashKeyGroup 还不能",
+          "edit_history_tweet_ids": [
+            "2036093943029330332"
+          ],
+          "author_id": "1954166149",
+          "id": "2036093943029330332",
+          "created_at": "2026-03-23T14:53:19.000Z"
+        }
+      ]
+    },
+    {
+      "username": "thankUcrypto",
+      "category": "Influencer",
+      "count": 7,
+      "tweets": [
+        {
+          "id": "2036202762414035196",
+          "public_metrics": {
+            "retweet_count": 2,
+            "reply_count": 36,
+            "like_count": 60,
+            "quote_count": 3,
+            "bookmark_count": 6,
+            "impression_count": 36841
+          },
+          "created_at": "2026-03-23T22:05:44.000Z",
+          "text": "和币安人生没任何利益相关。\n纯粹是今天cz把书名定了，中文名确实是币安人生，利好兑现，新闻交易员冲了一波流动性，砸下来没新低，就买点儿玩儿。\n\n以后币安人生是BSC",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036202613683937677",
+            "2036202762414035196"
+          ]
+        },
+        {
+          "id": "2036202613683937677",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 2147
+          },
+          "created_at": "2026-03-23T22:05:08.000Z",
+          "text": "和币安人生没任何利益相关。\n纯粹是今天cz把书名定了，中文名确实是币安人生，利好兑现，新闻交易员冲了一波流动性，砸下来没新低，就买点儿玩儿。\n\n以后币安人生是BSC",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036202613683937677",
+            "2036202762414035196"
+          ]
+        },
+        {
+          "id": "2036200874025034236",
+          "public_metrics": {
+            "retweet_count": 9,
+            "reply_count": 19,
+            "like_count": 50,
+            "quote_count": 0,
+            "bookmark_count": 6,
+            "impression_count": 33849
+          },
+          "created_at": "2026-03-23T21:58:13.000Z",
+          "text": "准备买1x币安人生，明天开奖。\n撸到10wu了。最高13wu回撤了，可惜。 https://t.co/DE65jZX0Vl",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036200874025034236"
+          ]
+        },
+        {
+          "id": "2036094563937595511",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 5,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 5048
+          },
+          "created_at": "2026-03-23T14:55:47.000Z",
+          "text": "@Allen19830825 我看了一圈，每个人都可以在互联网上合理键政，每个人观点也都是对的，视野不同而已。",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036094563937595511"
+          ]
+        },
+        {
+          "id": "2036092323403329924",
+          "public_metrics": {
+            "retweet_count": 1,
+            "reply_count": 0,
+            "like_count": 3,
+            "quote_count": 0,
+            "bookmark_count": 1,
+            "impression_count": 5351
+          },
+          "created_at": "2026-03-23T14:46:53.000Z",
+          "text": "@K59434512 哈哈，你这典型，好不容易全对个两天就有这种评论了。 https://t.co/ZNxPelsQXv",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036092323403329924"
+          ]
+        },
+        {
+          "id": "2036091482369847482",
+          "public_metrics": {
+            "retweet_count": 10,
+            "reply_count": 30,
+            "like_count": 104,
+            "quote_count": 0,
+            "bookmark_count": 20,
+            "impression_count": 54608
+          },
+          "created_at": "2026-03-23T14:43:32.000Z",
+          "text": "笑了，这小资金账户真24小时10倍，7500-81000。\n再晚点儿估计截不到了，现在还能赚钱真开心。玩儿游戏去了留了点儿白银多单仓位，12X保本损，准备每次吃几万U就平了。\n\n这次特朗普停战新闻还有昨天的siren，就第一波停战先空了一下损了回撤了，其他没错一单，都是纯盘逻辑在玩儿。 https://t.co/6RFJBXfcWb",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036091482369847482"
+          ]
+        },
+        {
+          "id": "2036078895372673088",
+          "public_metrics": {
+            "retweet_count": 1,
+            "reply_count": 27,
+            "like_count": 97,
+            "quote_count": 0,
+            "bookmark_count": 7,
+            "impression_count": 77114
+          },
+          "created_at": "2026-03-23T13:53:31.000Z",
+          "text": "我觉得很好理解吧。\n特朗普第一次说谈判要和平，市场涨起来追个涨。 伊朗媒体发文就开个空，这时候我以为川普是口嗨。",
+          "author_id": "705564530936418304",
+          "edit_history_tweet_ids": [
+            "2036078895372673088"
+          ]
+        }
+      ]
+    }
+  ],
+  "topic_data": [
+    {
+      "label": "BTC话题",
+      "count": 10,
+      "tweets": [
+        {
+          "text": "📣FOREX FREE GOLD (SIGNAL)\nTRADING SIGNALS!\n👇JOIN NOW 👇\n🚨Telegram:https://t.co/aRqRYvaAFJ\n\n🔥 97% Accuracy Rate  \n📈 3–6 Profitable Signals Every Day  \n\n#BTCUSD \n#Crypto\n#Bitcoin\n#BTC💯\n#XAUUSD $USTD $sidkfnfxj",
+          "edit_history_tweet_ids": [
+            "2036318767219875863"
+          ],
+          "created_at": "2026-03-24T05:46:41.000Z",
+          "author_id": "1904856196085145601",
+          "id": "2036318767219875863",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        },
+        {
+          "text": "@MDBitcoin Most people believe in Bitcoin… until it tests them.\n\nPrice drops, conviction disappears. That’s not belief, that’s positioning.\n\nI don’t treat Bitcoin like a trade. I treat it as a conversion. Weak money into hard money, step by step.\n\nNo timing. No guessing. Just consistent",
+          "edit_history_tweet_ids": [
+            "2036318757044318651"
+          ],
+          "created_at": "2026-03-24T05:46:39.000Z",
+          "author_id": "1990715429053214723",
+          "id": "2036318757044318651",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 1,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        },
+        {
+          "text": "湾岸諸国がイラン情勢に巻き込まれそうなニュースが出てるのに、BTCは$70Kを42時間守ってる。地政学リスクに対して鈍感になってきてる感じがする。売りたい人はもう売った後なのかも。F&amp;G 8の中でこの底堅さは、静かな強さだと思う。 #BTC #ビットコイン",
+          "edit_history_tweet_ids": [
+            "2036318756385988914"
+          ],
+          "created_at": "2026-03-24T05:46:39.000Z",
+          "author_id": "2034803690012647425",
+          "id": "2036318756385988914",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        }
+      ]
+    },
+    {
+      "label": "ETH话题",
+      "count": 10,
+      "tweets": [
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          },
+          "id": "2036318755089711287",
+          "text": "#APT/USDT \n\nTarget Tuch 1 ✅\n\nProfit: 13.6698% 📈\nin: 3 hr 2 min ⏰\n#BBB26 #WWENXT    #BTC #ETH #Crypto\nJoin our telegram community \nhttps://t.co/s9NImZ79q7",
+          "created_at": "2026-03-24T05:46:38.000Z",
+          "edit_history_tweet_ids": [
+            "2036318755089711287"
+          ],
+          "author_id": "1691048097932083201"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 1
+          },
+          "id": "2036318749926527219",
+          "text": "$ROLL $BTC $ETH $XRP $SOL $DOGE $TRON $ADA $BNB $ASTER $TWT $GIGGLE $BOG #BabyDoge $TRUMP $WLFI https://t.co/xCD8o7KQwB",
+          "created_at": "2026-03-24T05:46:37.000Z",
+          "edit_history_tweet_ids": [
+            "2036318749926527219"
+          ],
+          "author_id": "99668101"
+        },
+        {
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          },
+          "id": "2036318748299214871",
+          "text": "@nukeyr Everyone should sell their #SOLANA\n\nThere are no $SOL gems 💎 😂 \n\nBuy #ETHEREUM\n\nAPE $SAIKO\n\nhttps://t.co/PidQmu8pZK https://t.co/HT52pNYtkp",
+          "created_at": "2026-03-24T05:46:37.000Z",
+          "edit_history_tweet_ids": [
+            "2036318748299214871"
+          ],
+          "author_id": "742098188891508736"
+        }
+      ]
+    },
+    {
+      "label": "BSC话题",
+      "count": 10,
+      "tweets": [
+        {
+          "created_at": "2026-03-24T05:46:38.000Z",
+          "id": "2036318753034572280",
+          "edit_history_tweet_ids": [
+            "2036318753034572280"
+          ],
+          "author_id": "1406023269568888835",
+          "text": "Binance Futures\n#NEAR/ $USDT Take-Profit target 3 ✅\nProfit: 122.8546% 📈\nPeriod: 1 Days 2 Hours 26 Minutes ⏰",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        },
+        {
+          "created_at": "2026-03-24T05:46:36.000Z",
+          "id": "2036318743270138270",
+          "edit_history_tweet_ids": [
+            "2036318743270138270"
+          ],
+          "author_id": "1778819593697468417",
+          "text": "@binance Coming to claim it",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        },
+        {
+          "created_at": "2026-03-24T05:46:32.000Z",
+          "id": "2036318729701572716",
+          "edit_history_tweet_ids": [
+            "2036318729701572716"
+          ],
+          "author_id": "1406023269568888835",
+          "text": "Binance Futures\n#NEAR/ #USDT Take-Profit target 3 ✅\nProfit: 122.8546% 📈\nPeriod: 1 Days 2 Hours 26 Minutes ⏰",
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          }
+        }
+      ]
+    },
+    {
+      "label": "币圈综合",
+      "count": 10,
+      "tweets": [
+        {
+          "edit_history_tweet_ids": [
+            "2036318562789330974"
+          ],
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 1
+          },
+          "id": "2036318562789330974",
+          "author_id": "2008282179118538752",
+          "text": "SIMON'S $CAT Early airdrop: unlock FREE crypto! 🚀\n\nFINALLY! If you're an $BEAM or #cryptocurrency holder, this #XRP #Airdrop is your ticket to instant #Wealth. Get ready! 🚀\n\nSecure your bag 💰 ✅ https://t.co/uVWPfu8BLb https://t.co/xc46rtfS9G",
+          "created_at": "2026-03-24T05:45:52.000Z"
+        },
+        {
+          "edit_history_tweet_ids": [
+            "2036318374213591482"
+          ],
+          "public_metrics": {
+            "retweet_count": 0,
+            "reply_count": 0,
+            "like_count": 0,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 0
+          },
+          "id": "2036318374213591482",
+          "author_id": "1690746909659742209",
+          "text": "On this day in Crypto history: March 24\n\nIn 2014, Flexcoin shut down following a significant Bitcoin theft.\n\nThis incident underscored the vulnerabilities of cryptocurrency exchanges and the importance of security measures.\n\nAs the industry grew, it became clear that safeguarding",
+          "created_at": "2026-03-24T05:45:08.000Z"
+        },
+        {
+          "edit_history_tweet_ids": [
+            "2036317703665815574"
+          ],
+          "public_metrics": {
+            "retweet_count": 1,
+            "reply_count": 0,
+            "like_count": 1,
+            "quote_count": 0,
+            "bookmark_count": 0,
+            "impression_count": 2
+          },
+          "id": "2036317703665815574",
+          "author_id": "1320677170826649601",
+          "text": "Paying with cryptocurrency will soon be as simple and fast as paying with a regular debit card.\nSocial miners will receive their rewards today and be able to spend them tomorrow using a #crypto card linked to Mastercard.\n\n👉https://t.co/6El5Jafz6D\n\n@TheDAOLabs #SocialMining #Web3 https://t.co/IYtQ9OEH04",
+          "created_at": "2026-03-24T05:42:28.000Z"
+        }
+      ]
+    }
+  ]
+}

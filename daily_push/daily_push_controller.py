@@ -119,7 +119,11 @@ class DailyPushController:
             latest_file = max(kol_files, key=os.path.getctime)
             with open(latest_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get('data', [])
+                # JSON结构: {kol_data: [...], topic_data: {...}, ...}
+                kol_data = data.get('kol_data', [])
+                # 已经是列表格式，直接使用
+                self.log(f"从文件加载 {len(kol_data)} 位KOL数据")
+                return kol_data
         return []
     
     def _fetch_prices(self):

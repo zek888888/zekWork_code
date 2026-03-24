@@ -132,14 +132,14 @@ def main():
     # 保存结果
     output = {
         'collection_time': datetime.now().isoformat(),
-        'target_date': '2026-03-20',
+        'target_date': datetime.now().strftime('%Y-%m-%d'),
         'kol_count': len(kols),
         'successful_kols': len(all_results),
         'kol_data': all_results,
         'topic_data': topic_results
     }
     
-    output_file = f"kol_tweets_0320_{datetime.now().strftime('%H%M')}.json"
+    output_file = f"kol_tweets_{datetime.now().strftime('%m%d')}_{datetime.now().strftime('%H%M')}.json"
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     
